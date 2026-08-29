@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ai-recommendable-api
+    runtime: python
+    repo: https://github.com/mmrfcmo/ai-recommendable-api
+    branch: main
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: ""
+      - key: JWT_SECRET_KEY
+        value: change-me-to-a-random-secret
+      - key: CORS_ORIGINS
+        value: https://ai-recommendable.com,http://localhost:3000,http://localhost:5173

@@ -5,7 +5,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     app_name: str = "AI-Recommendable"
-    app_version: str = "1.0.0"
+    app_version: str = "2.0.0"
     debug: bool = False
 
     database_url: Optional[str] = None

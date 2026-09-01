@@ -25,12 +25,12 @@ def send_notification(subject: str, html_body: str):
 
 
 def send_report_notification(business_name: str, email: str, score: int, grade: str, report_url: str):
-    """Send notification about a new visibility report."""
+    """Send notification about a new Discoverability Assessment."""
     full_url = f"https://ai-recommendable-api.onrender.com{report_url}" if report_url else ""
     html = f"""<!DOCTYPE html><html><body style="font-family:Inter,sans-serif;background:#f8fafc;padding:2rem;margin:0">
 <div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06)">
 <div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:2rem;text-align:center">
-<h1 style="color:white;margin:0;font-size:1.5rem">New AI Visibility Report</h1></div>
+<h1 style="color:white;margin:0;font-size:1.5rem">New Discoverability Assessment</h1></div>
 <div style="padding:2rem">
 <table style="width:100%;border-collapse:collapse">
 <tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Business</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{business_name}</td></tr>
@@ -40,7 +40,7 @@ def send_report_notification(business_name: str, email: str, score: int, grade: 
 <div style="text-align:center;margin:1.5rem 0">
 <a href="{full_url}" style="display:inline-block;padding:.75rem 2rem;background:#f59e0b;color:white;text-decoration:none;border-radius:8px;font-weight:600">View Report →</a></div>
 </div></div></body></html>"""
-    send_notification(f"New AI Visibility Report: {business_name}", html)
+    send_notification(f"New Discoverability Assessment: {business_name}", html)
 
 
 def send_assessment_notification(email: str, business_name: str, score: int, grade: str):
@@ -53,24 +53,6 @@ def send_assessment_notification(email: str, business_name: str, score: int, gra
 <table style="width:100%;border-collapse:collapse">
 <tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Business</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{business_name or "Not provided"}</td></tr>
 <tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Email</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{email}</td></tr>
-<tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Score</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{score}/35 ({grade})</td></tr>
-</table>
-</div></div></body></html>"""
-    send_notification(f"New AI Readiness Assessment: {email}", html)
-
-
-def send_booking_notification(name: str, email: str, phone: str, message: str):
-    """Send notification about a booking request."""
-    html = f"""<!DOCTYPE html><html><body style="font-family:Inter,sans-serif;background:#f8fafc;padding:2rem;margin:0">
-<div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06)">
-<div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:2rem;text-align:center">
-<h1 style="color:white;margin:0;font-size:1.5rem">New Booking Request</h1></div>
-<div style="padding:2rem">
-<table style="width:100%;border-collapse:collapse">
-<tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Name</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{name}</td></tr>
-<tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Email</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{email}</td></tr>
-<tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Phone</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{phone or "Not provided"}</td></tr>
-<tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Message</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{message or "None"}</td></tr>
-</table>
-</div></div></body></html>"""
-    send_notification(f"New Booking Request: {name}", html)
+<tr><td style="padding:.5rem 0;color:#64748b;font-size:.875rem">Score</td><td style="padding:.5rem 0;font-weight:600;text-align:right">{score}/100 ({grade})</td></tr>
+</table></div></div></body></html>"""
+    send_notification(f"New AI Readiness Assessment: {business_name or email}", html)

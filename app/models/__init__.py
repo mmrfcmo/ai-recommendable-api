@@ -6,9 +6,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
-class VisibilityReport(Base):
-    """AI Visibility Report - lead capture and scan results."""
-    __tablename__ = "visibility_reports"
+class DiscoverabilityReport(Base):
+    """Discoverability Assessment - lead capture and scan results."""
+    __tablename__ = "discoverability_reports"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     business_name: Mapped[str] = mapped_column(String(255), nullable=False)

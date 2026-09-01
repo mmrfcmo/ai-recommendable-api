@@ -1,5 +1,5 @@
-# ai-recommendable-api
+# AI-Recommendable API
 
-Backend API for AI-Recommendable — AI Visibility Reports & Readiness Assessments
+Backend API for AI-Recommendable — Discoverability Assessments & Trust Signal Analysis
 
-Deploy fix: routes, services, and schemas moved to correct paths.
+Assess how discoverable your business is across AI search surfaces by analysing 6 trust signals: Schema.org markup, NAP consistency, entity clarity, content depth, trust signals, and technical SEO.

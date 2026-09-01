@@ -1,13 +1,14 @@
 """Workflow Engine - SQLAlchemy models for project and task persistence."""
 import uuid
 from datetime import datetime, timezone
+from typing import Optional, List
+from enum import Enum
 from sqlalchemy import String, DateTime, Text, Enum as SAEnum, ForeignKey, JSON, Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
-import enum
 
 
-class ProjectStatus(str, enum.Enum):
+class ProjectStatus(str, Enum):
     new = "new"
     active = "active"
     completed = "completed"
@@ -15,7 +16,7 @@ class ProjectStatus(str, enum.Enum):
     monitoring = "monitoring"
 
 
-class TaskStatus(str, enum.Enum):
+class TaskStatus(str, Enum):
     pending = "pending"
     queued = "queued"
     running = "running"
@@ -27,7 +28,7 @@ class TaskStatus(str, enum.Enum):
     awaiting_review = "awaiting_review"
 
 
-class TaskType(str, enum.Enum):
+class TaskType(str, Enum):
     content_generation = "content_generation"
     report_generation = "report_generation"
     review_approval = "review_approval"

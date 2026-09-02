@@ -138,10 +138,10 @@ async def generate_schema_recommendations(task, project, scan_data, signals):
                 "json_ld": {
                     "@context": "https://schema.org",
                     "@type": "LocalBusiness",
-                    "name": "{{business_name}}",
-                    "url": "{{website}}",
-                    "telephone": "{{phone}}",
-                    "email": "{{email}}",
+                    "name": project.business_name,
+                    "url": project.website,
+                    "telephone": project.phone or "",
+                    "email": project.email or "",
                     "address": {
                         "@type": "PostalAddress"
                     },
@@ -175,10 +175,10 @@ async def generate_schema_recommendations(task, project, scan_data, signals):
             "json_ld": {
                 "@context": "https://schema.org",
                 "@type": "LocalBusiness",
-                "name": "{{business_name}}",
-                "url": "{{website}}",
-                "telephone": "{{phone}}",
-                "email": "{{email}}",
+                "name": project.business_name,
+                "url": project.website,
+                "telephone": project.phone or "",
+                "email": project.email or "",
                 "address": {
                     "@type": "PostalAddress"
                 },

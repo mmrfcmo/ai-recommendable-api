@@ -32,12 +32,9 @@ class TaskStatus(str, Enum):
 class TaskType(str, Enum):
     content_generation = "content_generation"
     report_generation = "report_generation"
-    review_approval = "review_approval"
     seo_audit = "seo_audit"
     schema_markup = "schema_markup"
     citation_building = "citation_building"
-    google_business_optimisation = "google_business_optimisation"
-    social_media_setup = "social_media_setup"
 
 
 class Project(Base):

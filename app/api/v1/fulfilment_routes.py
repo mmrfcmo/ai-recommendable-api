@@ -297,13 +297,11 @@ async def create_project_from_scan(scan_id: str, db: AsyncSession = Depends(get_
     db.add(project)
     await db.flush()
 
-    # Create initial task set
+    # Create initial task set — only tasks with registered generators
     task_definitions = [
         {"type": TaskType.seo_audit, "depends_on": []},
         {"type": TaskType.schema_markup, "depends_on": ["seo_audit"]},
         {"type": TaskType.citation_building, "depends_on": ["seo_audit"]},
-        {"type": TaskType.google_business_optimisation, "depends_on": ["seo_audit"]},
-        {"type": TaskType.social_media_setup, "depends_on": ["seo_audit"]},
         {"type": TaskType.report_generation, "depends_on": ["schema_markup", "citation_building"], "status": TaskStatus.awaiting_review},
         {"type": TaskType.content_generation, "depends_on": ["schema_markup", "citation_building"], "status": TaskStatus.awaiting_review},
     ]

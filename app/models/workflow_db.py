@@ -3,7 +3,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
 from enum import Enum
-from sqlalchemy import String, DateTime, Text, Enum as SAEnum, ForeignKey, JSON, Float, Integer
+from sqlalchemy import String, DateTime, Text, ForeignKey, JSON, Float, Integer
+from sqlalchemy import Enum as SAEnumType
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
@@ -50,7 +51,7 @@ class Project(Base):
     discoverability_score: Mapped[int] = mapped_column(Integer, default=0)
     discoverability_grade: Mapped[str] = mapped_column(String(50), nullable=True)
     scan_results: Mapped[dict] = mapped_column(JSON, default=dict)
-    status: Mapped[ProjectStatus] = mapped_column(SAEnum(ProjectStatus), default=ProjectStatus.new, nullable=False)
+    status: Mapped[ProjectStatus] = mapped_column(SAEnumType(ProjectStatus), default=ProjectStatus.new, nullable=False)
     product_type: Mapped[str] = mapped_column(String(50), default="discoverability_improvement")
     price: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
@@ -65,8 +66,8 @@ class Task(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
-    type: Mapped[TaskType] = mapped_column(SAEnum(TaskType), nullable=False)
-    status: Mapped[TaskStatus] = mapped_column(SAEnum(TaskStatus), default=TaskStatus.pending, nullable=False)
+    type: Mapped[TaskType] = mapped_column(SAEnumType(TaskType), nullable=False)
+    status: Mapped[TaskStatus] = mapped_column(SAEnumType(TaskStatus), default=TaskStatus.pending, nullable=False)
     depends_on: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)

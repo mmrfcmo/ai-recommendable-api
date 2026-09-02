@@ -178,8 +178,22 @@ def build_delivery_markdown(project, tasks: list) -> str:
                     lines.append(f"**Signal Breakdown:**")
                     for sig in output.get("signal_breakdown", []):
                         icon = "✅" if sig.get("passed") else "❌"
-                        lines.append(f"- {icon} **{sig.get('name')}** — {sig.get('score')}/{sig.get('max_score')} — {sig.get('details')}")
+                        lines.append(f"- {icon} **{sig.get('label')}** — {sig.get('score')}/{sig.get('max_score')} — {sig.get('details')}")
                     lines.append(f"")
+                    
+                    ai_trust = output.get("ai_trust_strategy")
+                    if ai_trust:
+                        lines.append(f"**AI-Generated Improvement Strategy:**")
+                        lines.append(f"")
+                        lines.append(ai_trust)
+                        lines.append(f"")
+                    
+                    ai_content = output.get("ai_content_strategy")
+                    if ai_content:
+                        lines.append(f"**AI-Generated Content Strategy:**")
+                        lines.append(f"")
+                        lines.append(ai_content)
+                        lines.append(f"")
 
             else:
                 # Generic output display

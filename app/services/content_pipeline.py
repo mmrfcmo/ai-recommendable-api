@@ -16,22 +16,31 @@ def register_generator(name):
 
 @register_generator("content_generation")
 async def generate_content(task, project, scan_data, signals):
-    """Generate homepage copy based on scan findings."""
-    # Build content from weak signals
+    """Generate homepage copy using AI, falling back to templates."""
+    from app.services.ai_service import generate_homepage_content
+
+    ai_content = await generate_homepage_content(project.business_name, project.website, signals)
+
+    if ai_content:
+        return {
+            "content": ai_content,
+            "word_count": len(ai_content.split()),
+            "sections": ["hero", "value_proposition", "social_proof", "cta"],
+            "generated": True,
+            "source": "ai",
+        }
+
+    # Fallback to template
     weak_signals = [s for s in signals if not getattr(s, "passed", False)]
     strong_signals = [s for s in signals if getattr(s, "passed", False)]
 
     sections = []
-
-    # Hero section
     sections.append(f"<h2>Welcome to {project.business_name}</h2>")
 
-    # Value proposition based on strong signals
     if strong_signals:
         sections.append("<p>We're proud of our strong online presence. "
                         "Our customers trust us — and it shows.</p>")
 
-    # Improvement areas
     if weak_signals:
         sections.append("<h2>Areas We're Improving</h2>")
         items = []
@@ -39,7 +48,6 @@ async def generate_content(task, project, scan_data, signals):
             items.append(f"<li>Enhancing our {s.details[:60]}</li>")
         sections.append("<ul>" + "".join(items) + "</ul>")
 
-    # CTA
     sections.append("<h2>Ready to Get Started?</h2>")
     sections.append("<p>Contact us today for a free discoverability consultation.</p>")
 
@@ -49,16 +57,22 @@ async def generate_content(task, project, scan_data, signals):
         "word_count": len(content.split()),
         "sections": ["hero", "value_proposition", "improvement_areas", "cta"],
         "generated": True,
+        "source": "template",
     }
 
 
 @register_generator("report_generation")
 async def generate_report(task, project, scan_data, signals):
-    """Generate a summary report from scan results."""
+    """Generate a summary report from scan results with AI insights."""
     passed = sum(1 for s in signals if getattr(s, "passed", False))
     total = len(signals)
     score = project.discoverability_score
     grade = project.discoverability_grade
+
+    # Try AI-enhanced trusted strategy
+    from app.services.ai_service import generate_trust_signal_strategy, generate_content_depth_strategy
+    trust_strategy = await generate_trust_signal_strategy(project.business_name, project.website, signals)
+    content_strategy = await generate_content_depth_strategy(project.business_name, project.website, signals)
 
     report = {
         "business_name": project.business_name,
@@ -70,6 +84,7 @@ async def generate_report(task, project, scan_data, signals):
         "signal_breakdown": [
             {
                 "name": s.name,
+                "label": s.name.replace("_", " ").title(),
                 "passed": getattr(s, "passed", False),
                 "score": getattr(s, "score", 0),
                 "max_score": getattr(s, "max_score", 0),
@@ -77,6 +92,8 @@ async def generate_report(task, project, scan_data, signals):
             }
             for s in signals
         ],
+        "ai_trust_strategy": trust_strategy,
+        "ai_content_strategy": content_strategy,
         "generated": True,
         "generated_at": datetime.now().isoformat(),
     }

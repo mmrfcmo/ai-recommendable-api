@@ -217,6 +217,43 @@ async def execute_project(project_id: str, db: AsyncSession = Depends(get_db)):
     return {"success": True, "project_id": project_id, "message": "Task execution started"}
 
 
+@router.get("/projects/{project_id}/deliver")
+async def deliver_project_report(project_id: str, db: AsyncSession = Depends(get_db)):
+    """Generate delivery PDF for a project."""
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    from app.services.delivery import generate_project_delivery
+
+    try:
+        markdown = await generate_project_delivery(project_id)
+        return {"success": True, "project_id": project_id, "markdown": markdown, "business_name": project.business_name}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/projects/{project_id}/deploy")
+async def deploy_to_wordpress(
+    project_id: str,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """Deploy completed deliverables to a WordPress site."""
+    site_url = body.get("site_url")
+    username = body.get("username")
+    password = body.get("password")
+
+    if not site_url or not username or not password:
+        raise HTTPException(status_code=400, detail="site_url, username, and password are required")
+
+    from app.services.wordpress_connector import deploy_project_to_wordpress
+
+    result = await deploy_project_to_wordpress(project_id, site_url, username, password)
+    return result
+
+
 @router.post("/tasks/{task_id}/regenerate")
 async def regenerate_task(task_id: str, db: AsyncSession = Depends(get_db)):
     """Reset a task for regeneration."""

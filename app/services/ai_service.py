@@ -6,13 +6,15 @@ from app.core.config import settings
 
 logger = logging.getLogger("ai_recommendable.ai_service")
 
-# Check if OpenAI API key is configured
-HAS_OPENAI = bool(settings.openai_api_key)
+
+def _has_openai() -> bool:
+    """Lazy check for OpenAI API key."""
+    return bool(settings.openai_api_key)
 
 
 async def generate_with_ai(prompt: str, system_message: str = None, max_tokens: int = 1000) -> Optional[str]:
     """Generate content using OpenAI."""
-    if not HAS_OPENAI:
+    if not _has_openai():
         logger.warning("OpenAI API key not configured — using templates")
         return None
 

@@ -14,8 +14,11 @@ def _has_openai() -> bool:
 
 async def generate_with_ai(prompt: str, system_message: str = None, max_tokens: int = 1000) -> Optional[str]:
     """Generate content using OpenAI."""
+    key_status = "SET" if settings.openai_api_key else "NOT SET"
+    logger.info(f"OpenAI API key check: {key_status}")
+    
     if not _has_openai():
-        logger.warning("OpenAI API key not configured — using templates")
+        logger.warning(f"OpenAI API key not configured (status: {key_status}) — using templates")
         return None
 
     try:

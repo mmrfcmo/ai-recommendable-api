@@ -99,22 +99,46 @@ def build_delivery_markdown(project, tasks: list) -> str:
                 lines.append(f"")
 
             elif task_type == "schema_markup":
-                if output.get("status") == "existing":
-                    lines.append(f"✅ Schema.org markup already detected.")
+                if output.get("status") == "complete":
+                    lines.append(f"✅ Schema.org markup detected and well-implemented.")
+                    lines.append(f"")
+                elif output.get("status") == "partial":
+                    lines.append(f"⚠️ Schema.org markup found but incomplete.")
+                    lines.append(f"")
+                    lines.append(f"**Recommended JSON-LD (add to your site header):**")
+                    lines.append(f"")
+                    lines.append(f"```json")
+                    import json
+                    json_ld = output.get("json_ld", {})
+                    lines.append(json.dumps(json_ld, indent=2))
+                    lines.append(f"```")
+                    lines.append(f"")
+                    lines.append(f"**Instructions:**")
+                    lines.append(f"1. Copy the JSON-LD code above")
+                    lines.append(f"2. In WordPress, install a schema plugin (like RankMath or Yoast)")
+                    lines.append(f"3. Or add it via your theme's header.php inside <head>")
+                    lines.append(f"4. Replace placeholder values (address, phone, ratings) with actual data")
+                    lines.append(f"")
+                    lines.append(f"**Additional recommendations:**")
+                    for rec in output.get("recommendations", []):
+                        lines.append(f"- {rec}")
                     lines.append(f"")
                 else:
                     lines.append(f"❌ No schema.org markup detected.")
                     lines.append(f"")
-                    lines.append(f"**Recommended Schema (JSON-LD):**")
+                    lines.append(f"**Recommended JSON-LD (add to your site header):**")
                     lines.append(f"")
                     lines.append(f"```json")
-                    lines.append(f'{{')
-                    lines.append(f'  "@context": "https://schema.org",')
-                    lines.append(f'  "@type": "LocalBusiness",')
-                    lines.append(f'  "name": "{project.business_name}",')
-                    lines.append(f'  "url": "{project.website}"')
-                    lines.append(f'}}')
+                    import json
+                    json_ld = output.get("json_ld", {})
+                    lines.append(json.dumps(json_ld, indent=2))
                     lines.append(f"```")
+                    lines.append(f"")
+                    lines.append(f"**Instructions:**")
+                    lines.append(f"1. Copy the JSON-LD code above")
+                    lines.append(f"2. In WordPress, go to Appearance → Theme Editor → header.php")
+                    lines.append(f"3. Paste it just before the closing </head> tag")
+                    lines.append(f"4. Or use a plugin like Insert Headers and Footers")
                     lines.append(f"")
                     lines.append(f"**Additional recommendations:**")
                     for rec in output.get("recommendations", []):

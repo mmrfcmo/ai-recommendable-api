@@ -120,21 +120,88 @@ async def generate_schema_recommendations(task, project, scan_data, signals):
             break
 
     if schema_signal and getattr(schema_signal, "passed", False):
-        return {
-            "status": "existing",
-            "detail": "Schema.org markup already detected",
-            "recommendations": ["Consider adding product schema", "Add FAQ schema if applicable"],
-            "generated": True,
-        }
+        score = getattr(schema_signal, "score", 0)
+        max_score = getattr(schema_signal, "max_score", 20)
+        
+        if score >= max_score:
+            return {
+                "status": "complete",
+                "detail": "Schema.org markup detected and well-implemented",
+                "recommendations": ["Consider adding Product schema", "Add FAQ schema if applicable"],
+                "generated": True,
+            }
+        else:
+            # Schema exists but is incomplete — provide specific improvements
+            return {
+                "status": "partial",
+                "detail": "Schema.org markup found but incomplete. Missing LocalBusiness schema with business details.",
+                "json_ld": {
+                    "@context": "https://schema.org",
+                    "@type": "LocalBusiness",
+                    "name": "{{business_name}}",
+                    "url": "{{website}}",
+                    "telephone": "{{phone}}",
+                    "email": "{{email}}",
+                    "address": {
+                        "@type": "PostalAddress"
+                    },
+                    "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": "",
+                        "reviewCount": ""
+                    },
+                    "openingHoursSpecification": [
+                        {"@type": "OpeningHoursSpecification", "dayOfWeek": "Monday", "opens": "09:00", "closes": "17:00"},
+                        {"@type": "OpeningHoursSpecification", "dayOfWeek": "Tuesday", "opens": "09:00", "closes": "17:00"},
+                        {"@type": "OpeningHoursSpecification", "dayOfWeek": "Wednesday", "opens": "09:00", "closes": "17:00"},
+                        {"@type": "OpeningHoursSpecification", "dayOfWeek": "Thursday", "opens": "09:00", "closes": "17:00"},
+                        {"@type": "OpeningHoursSpecification", "dayOfWeek": "Friday", "opens": "09:00", "closes": "17:00"}
+                    ],
+                    "sameAs": []
+                },
+                "recommendations": [
+                    "Add LocalBusiness schema with full business details (name, address, phone, opening hours)",
+                    "Add AggregateRating schema to display star ratings in search results",
+                    "Add FAQ schema using your existing FAQ content",
+                    "Add breadcrumb schema for better navigation understanding",
+                    "Link your Google Business Profile via sameAs array",
+                ],
+                "generated": True,
+            }
     else:
         return {
             "status": "needs_implementation",
             "detail": "No schema.org markup detected",
+            "json_ld": {
+                "@context": "https://schema.org",
+                "@type": "LocalBusiness",
+                "name": "{{business_name}}",
+                "url": "{{website}}",
+                "telephone": "{{phone}}",
+                "email": "{{email}}",
+                "address": {
+                    "@type": "PostalAddress"
+                },
+                "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": "",
+                    "reviewCount": ""
+                },
+                "openingHoursSpecification": [
+                    {"@type": "OpeningHoursSpecification", "dayOfWeek": "Monday", "opens": "09:00", "closes": "17:00"},
+                    {"@type": "OpeningHoursSpecification", "dayOfWeek": "Tuesday", "opens": "09:00", "closes": "17:00"},
+                    {"@type": "OpeningHoursSpecification", "dayOfWeek": "Wednesday", "opens": "09:00", "closes": "17:00"},
+                    {"@type": "OpeningHoursSpecification", "dayOfWeek": "Thursday", "opens": "09:00", "closes": "17:00"},
+                    {"@type": "OpeningHoursSpecification", "dayOfWeek": "Friday", "opens": "09:00", "closes": "17:00"}
+                ],
+                "sameAs": []
+            },
             "recommendations": [
-                "Add LocalBusiness schema",
-                "Add Organization schema",
+                "Add LocalBusiness schema with full business details (name, address, phone, opening hours)",
+                "Add Organization schema for company-level information",
                 "Implement FAQ schema for common questions",
-                "Add breadcrumb schema",
+                "Add breadcrumb schema for better navigation understanding",
+                "Add AggregateRating schema to display star ratings in search results",
             ],
             "generated": True,
         }

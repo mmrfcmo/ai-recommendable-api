@@ -74,6 +74,8 @@ async def execute_project_tasks(project_id: str, signals: list) -> List[dict]:
         tasks = result.scalars().all()
 
     results = []
+    # Build a type->id map so we can resolve depends_on by type name
+    type_to_id = {t.type.value: t.id for t in tasks}
     executed = set()
 
     # Simple topological execution — keep trying until no more can run
@@ -83,13 +85,17 @@ async def execute_project_tasks(project_id: str, signals: list) -> List[dict]:
         still_remaining = []
 
         for t in remaining:
-            deps_met = all(d in executed for d in t.depends_on)
+            # Resolve depends_on: convert type names to actual task IDs
+            dep_ids = set()
+            for dep in t.depends_on:
+                if dep in type_to_id:
+                    dep_ids.add(type_to_id[dep])
+            deps_met = dep_ids.issubset(executed) if dep_ids else True
+
             if deps_met and t.status == TaskStatus.pending:
                 batch.append(t)
             elif deps_met and t.status == TaskStatus.awaiting_review:
-                # Awaiting review tasks still get generated but stay awaiting_review
-                # We process them after all dependencies are done
-                if all(d in executed for d in t.depends_on):
+                if dep_ids.issubset(executed):
                     batch.append(t)
             else:
                 still_remaining.append(t)

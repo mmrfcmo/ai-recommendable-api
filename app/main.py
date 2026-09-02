@@ -2,7 +2,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.v1.discoverability import router as discoverability_router
@@ -47,11 +47,21 @@ async def health_check():
     return {"status": "ok", "version": settings.app_version}
 
 
-@app.get("/wordpress-plugin/download")
+@app.get("/sitemap.xml", response_class=Response, include_in_schema=False)
+async def sitemap():
+    """Serve sitemap.xml."""
+    sitemap_path = os.path.join(os.path.dirname(__file__), "..", "sitemap.xml")
+    sitemap_path = os.path.abspath(sitemap_path)
+    if os.path.exists(sitemap_path):
+        with open(sitemap_path, "r") as f:
+            return Response(content=f.read(), media_type="application/xml")
+    return Response(content="<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'></urlset>", media_type="application/xml")
+
+
+@app.get("/wordpress-plugin/download", include_in_schema=False)
 async def download_wordpress_plugin():
     """Download the AI-Recommendable Connector WordPress plugin."""
     plugin_path = os.path.join(os.path.dirname(__file__), "..", "wordpress-plugin", "ai-recommendable-connector.php")
-    # Resolve path
     plugin_path = os.path.abspath(plugin_path)
     if os.path.exists(plugin_path):
         return FileResponse(
@@ -59,11 +69,10 @@ async def download_wordpress_plugin():
             media_type="application/octet-stream",
             filename="ai-recommendable-connector.php",
         )
-    # Fallback: return the raw content from GitHub
     return {"error": "Plugin file not found on server", "download_url": "https://raw.githubusercontent.com/mmrfcmo/ai-recommendable-api/main/wordpress-plugin/ai-recommendable-connector.php"}
 
 
-@app.get("/wordpress-plugin", response_class=HTMLResponse)
+@app.get("/wordpress-plugin", response_class=HTMLResponse, include_in_schema=False)
 async def wordpress_plugin_page():
     """Plugin information and download page."""
     plugin_page = os.path.join(os.path.dirname(__file__), "..", "wordpress-plugin", "wordpress-plugin.html")

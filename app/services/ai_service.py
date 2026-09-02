@@ -17,15 +17,15 @@ async def generate_with_ai(prompt: str, system_message: str = None, max_tokens: 
         return None
 
     try:
-        import openai
-        openai.api_key = settings.openai_api_key
+        from openai import AsyncOpenAI
+        client = AsyncOpenAI(api_key=settings.openai_api_key)
 
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
         messages.append({"role": "user", "content": prompt})
 
-        response = await openai.ChatCompletion.acreate(
+        response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
             max_tokens=max_tokens,

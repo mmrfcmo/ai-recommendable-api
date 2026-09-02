@@ -1,5 +1,8 @@
 """Fulfilment Dashboard - API routes for managing projects and tasks."""
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger("ai_recommendable.fulfilment")
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
@@ -177,6 +180,43 @@ async def approve_or_reject_task(req: ApprovalRequest, db: AsyncSession = Depend
     return {"success": True, "task_id": req.task_id, "new_status": task.status.value}
 
 
+@router.post("/projects/{project_id}/execute", status_code=status.HTTP_200_OK)
+async def execute_project(project_id: str, db: AsyncSession = Depends(get_db)):
+    """Manually trigger task execution for a project."""
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Extract signals from scan results
+    signals = []
+    if project.scan_results:
+        raw_signals = project.scan_results.get("signals", [])
+        from app.schemas.discoverability import SignalResult
+        for s in raw_signals:
+            signals.append(SignalResult(
+                name=s.get("name", ""),
+                passed=s.get("passed", False),
+                score=s.get("score", 0),
+                max_score=s.get("max_score", 0),
+                details=s.get("details", ""),
+            ))
+
+    import asyncio
+    from app.services.task_executor import execute_project_tasks
+
+    async def run_and_notify():
+        try:
+            results = await execute_project_tasks(project.id, signals)
+            logger.info(f"Manual execute for {project_id}: {len(results)} tasks")
+        except Exception as e:
+            logger.error(f"Manual execute failed: {e}")
+
+    asyncio.create_task(run_and_notify())
+
+    return {"success": True, "project_id": project_id, "message": "Task execution started"}
+
+
 @router.post("/tasks/{task_id}/regenerate")
 async def regenerate_task(task_id: str, db: AsyncSession = Depends(get_db)):
     """Reset a task for regeneration."""
@@ -241,4 +281,32 @@ async def create_project_from_scan(scan_id: str, db: AsyncSession = Depends(get_
         db.add(t)
 
     await db.commit()
+
+    # Extract signals from scan results for the executor
+    signals = []
+    if report.scan_results:
+        raw_signals = report.scan_results.get("signals", [])
+        from app.schemas.discoverability import SignalResult
+        for s in raw_signals:
+            signals.append(SignalResult(
+                name=s.get("name", ""),
+                passed=s.get("passed", False),
+                score=s.get("score", 0),
+                max_score=s.get("max_score", 0),
+                details=s.get("details", ""),
+            ))
+
+    # Auto-execute tasks in background
+    import asyncio
+    from app.services.task_executor import execute_project_tasks
+
+    async def run_and_notify():
+        try:
+            results = await execute_project_tasks(project.id, signals)
+            logger.info(f"Project {project.id}: {len(results)} tasks executed")
+        except Exception as e:
+            logger.error(f"Project {project.id} execution failed: {e}")
+
+    asyncio.create_task(run_and_notify())
+
     return {"success": True, "project_id": project.id, "tasks_created": len(task_definitions)}

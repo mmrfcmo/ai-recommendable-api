@@ -28,26 +28,45 @@ class WordPressClient:
             return False
 
     async def deploy_schema_markup(self, schema_json: str) -> dict:
-        """Deploy schema markup by updating the site header via a custom endpoint.
+        """Deploy schema markup via the AI-Recommendable Connector plugin.
         
-        For simple schema deployment, we recommend using a plugin like 
-        Yoast SEO or RankMath which has its own API. Alternatively, this
-        deploys via a custom plugin endpoint if installed.
+        Requires the AI-Recommendable Connector WordPress plugin to be installed.
+        Falls back to providing instructions if the plugin isn't found.
         """
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(
-                    f"{self.base_url}/wp-json/ai-recommendable/v1/schema",
-                    json={"schema": schema_json},
+                # Check if the plugin is installed
+                health = await client.get(
+                    f"{self.base_url}/wp-json/ai-recommendable/v1/health",
                     auth=self.auth,
                 )
+                if health.status_code != 200:
+                    return {
+                        "success": False,
+                        "plugin_required": True,
+                        "message": "AI-Recommendable Connector plugin not detected. Install the plugin to enable auto-deployment, or paste the schema manually.",
+                        "plugin_url": "https://ai-recommendable.com/wordpress-plugin",
+                        "manual_instructions": "1. Download the plugin\n2. Upload to /wp-content/plugins/\n3. Activate\n4. Re-run deployment",
+                    }
+
+                resp = await client.post(
+                    f"{self.base_url}/wp-json/ai-recommendable/v1/schema",
+                    json={"schema": schema_json, "position": "header"},
+                    auth=self.auth,
+                )
+                data = resp.json()
                 return {
                     "success": resp.status_code == 200,
                     "status_code": resp.status_code,
-                    "message": resp.json().get("message", "Schema deployed") if resp.status_code == 200 else resp.text[:200],
+                    "message": data.get("message", "Schema deployed to site header"),
+                    "schemas_count": data.get("schemas_count", 0),
                 }
         except httpx.RequestError as e:
-            return {"success": False, "error": f"Connection failed: {str(e)[:100]}"}
+            return {
+                "success": False,
+                "plugin_required": True,
+                "error": f"WordPress site unreachable: {str(e)[:100]}",
+            }
 
     async def deploy_content(self, title: str, content_html: str, status: str = "draft") -> dict:
         """Create or update a WordPress page with generated content."""

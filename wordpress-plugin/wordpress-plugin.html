@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WordPress Plugin — AI-Recommendable Connector</title>
+  <meta name="description" content="Download the AI-Recommendable Connector WordPress plugin to deploy schema markup, content, and SEO improvements automatically.">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.6; }
+    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header { text-align: center; padding: 3rem 0 1rem; }
+    header h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+    header p { color: #64748b; margin-top: .5rem; font-size: 1.1rem; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; margin: 1.5rem 0; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .card ul { list-style: none; }
+    .card li { padding: .5rem 0; border-bottom: 1px solid #f1f5f9; }
+    .card li:last-child { border: none; }
+    .card li:before { content: "✅ "; }
+    .btn { display: inline-block; background: #0f172a; color: #fff; padding: .875rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1rem; transition: opacity .2s; }
+    .btn:hover { opacity: .85; }
+    .btn-secondary { background: #f1f5f9; color: #0f172a; margin-left: .5rem; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .code { background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 8px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: .875rem; overflow-x: auto; margin: 1rem 0; }
+    .steps { counter-reset: step; }
+    .steps li { counter-increment: step; padding: .75rem 0; border-bottom: 1px solid #f1f5f9; list-style: none; }
+    .steps li:before { content: counter(step) ". "; font-weight: 700; color: #0f172a; }
+    .steps li:last-child { border: none; }
+    .tag { display: inline-block; background: #dbeafe; color: #1e40af; font-size: .75rem; padding: .25rem .75rem; border-radius: 999px; font-weight: 600; }
+    footer { text-align: center; padding: 2rem 0; color: #94a3b8; font-size: .875rem; }
+    .flex { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1.5rem; }
+    .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; }
+    .logo a { color: #0f172a; text-decoration: none; }
+    @media (max-width: 600px) { .container { padding: 1rem; } header h1 { font-size: 1.5rem; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo"><a href="/">AI-Recommendable</a></div>
+      <h1>AI-Recommendable Connector</h1>
+      <p>WordPress plugin for automatic schema markup and content deployment</p>
+    </header>
+
+    <div class="card" style="text-align:center">
+      <p style="font-size:1.1rem;margin-bottom:1.5rem;color:#475569">
+        Install this plugin to enable automatic deployment of schema markup,<br>
+        content, and SEO improvements directly from your AI-Recommendable dashboard.
+      </p>
+      <div class="flex" style="justify-content:center">
+        <a href="https://raw.githubusercontent.com/mmrfcmo/ai-recommendable-api/main/wordpress-plugin/ai-recommendable-connector.php" class="btn" download>Download Plugin ↓</a>
+        <a href="#how-to-install" class="btn btn-secondary">How to Install</a>
+      </div>
+      <p style="margin-top:1rem;color:#94a3b8;font-size:.875rem">Version 1.0.0 • No dependencies • 6KB</p>
+    </div>
+
+    <div class="card">
+      <h2>What It Does</h2>
+      <ul>
+        <li>Deploys Schema.org JSON-LD markup to your site header</li>
+        <li>Enables remote content publishing via REST API</li>
+        <li>Schema health checks and management dashboard</li>
+        <li>Secure Application Password authentication</li>
+        <li>Works with any WordPress theme</li>
+        <li>No configuration needed — install and activate</li>
+      </ul>
+    </div>
+
+    <div class="card" id="how-to-install">
+      <h2>How to Install</h2>
+      <ol class="steps">
+        <li>Download the plugin file above</li>
+        <li>Go to your WordPress admin → Plugins → Add New → Upload Plugin</li>
+        <li>Choose the downloaded file and click "Install Now"</li>
+        <li>Click "Activate"</li>
+        <li>Go to Users → Profile → scroll to <strong>Application Passwords</strong></li>
+        <li>Enter "AI-Recommendable" and click "Add New Application Password"</li>
+        <li>Copy the generated password</li>
+        <li>Send your WordPress URL, username, and the application password to AI-Recommendable</li>
+      </ol>
+      <div class="tag">Takes 2 minutes</div>
+    </div>
+
+    <div class="card">
+      <h2>What Happens After Installation</h2>
+      <ol class="steps">
+        <li>AI-Recommendable runs a discoverability scan on your site</li>
+        <li>Schema markup is generated and deployed to your site header</li>
+        <li>Content improvements are created as draft pages</li>
+        <li>You review and publish from your WordPress dashboard</li>
+        <li>Your site is re-scanned in 30 days to track improvement</li>
+      </ol>
+    </div>
+
+    <div class="card" style="background:#f0fdf4;border-color:#bbf7d0">
+      <h2 style="color:#166534">✅ Secure by Design</h2>
+      <p style="color:#166534">
+        The plugin only allows users with <code>edit_theme_options</code> capability to modify schema.
+        Schema markup is stored in your WordPress options table — no files are modified.
+        Your main password is never shared; application passwords are scoped and revocable.
+      </p>
+    </div>
+
+    <footer>
+      <p>AI-Recommendable — <a href="/" style="color:#64748b">Home</a> • <a href="/v2-pricing.html" style="color:#64748b">Pricing</a> • <a href="/v2-contact.html" style="color:#64748b">Contact</a></p>
+      <p style="margin-top:.5rem">&copy; 2025 AI-Recommendable. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

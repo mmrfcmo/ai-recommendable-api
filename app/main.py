@@ -2,6 +2,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.v1.discoverability import router as discoverability_router
@@ -10,6 +11,7 @@ from app.api.v1.bookings import router as bookings_router
 from app.api.v1.fulfilment_routes import router as fulfilment_router
 import app.models  # noqa — ensure models are loaded
 import app.models.workflow_db  # noqa
+import os
 
 
 @asynccontextmanager
@@ -43,3 +45,30 @@ app.include_router(fulfilment_router)
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "version": settings.app_version}
+
+
+@app.get("/wordpress-plugin/download")
+async def download_wordpress_plugin():
+    """Download the AI-Recommendable Connector WordPress plugin."""
+    plugin_path = os.path.join(os.path.dirname(__file__), "..", "wordpress-plugin", "ai-recommendable-connector.php")
+    # Resolve path
+    plugin_path = os.path.abspath(plugin_path)
+    if os.path.exists(plugin_path):
+        return FileResponse(
+            plugin_path,
+            media_type="application/octet-stream",
+            filename="ai-recommendable-connector.php",
+        )
+    # Fallback: return the raw content from GitHub
+    return {"error": "Plugin file not found on server", "download_url": "https://raw.githubusercontent.com/mmrfcmo/ai-recommendable-api/main/wordpress-plugin/ai-recommendable-connector.php"}
+
+
+@app.get("/wordpress-plugin", response_class=HTMLResponse)
+async def wordpress_plugin_page():
+    """Plugin information and download page."""
+    plugin_page = os.path.join(os.path.dirname(__file__), "..", "wordpress-plugin", "wordpress-plugin.html")
+    plugin_page = os.path.abspath(plugin_page)
+    if os.path.exists(plugin_page):
+        with open(plugin_page, "r") as f:
+            return f.read()
+    return "<h1>WordPress Plugin</h1><p>Download: <a href='/wordpress-plugin/download'>ai-recommendable-connector.php</a></p>"

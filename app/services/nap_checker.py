@@ -142,6 +142,13 @@ async def check_google(reference: NAPReference) -> Dict:
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
             # Use the new Places API (v1) searchText
+            # Build query with location context if available
+            query_text = reference.business_name
+            if reference.postcode:
+                query_text += " " + reference.postcode
+            elif reference.address:
+                query_text += " " + reference.address
+            
             search_resp = await client.post(
                 "https://places.googleapis.com/v1/places:searchText",
                 headers={
@@ -150,7 +157,7 @@ async def check_google(reference: NAPReference) -> Dict:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "textQuery": reference.business_name,
+                    "textQuery": query_text,
                     "maxResultCount": 1,
                 },
             )

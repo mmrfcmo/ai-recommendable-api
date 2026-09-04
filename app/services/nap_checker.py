@@ -141,22 +141,38 @@ async def check_google(reference: NAPReference) -> Dict:
               "name": None, "address": None, "phone": None, "issues": [], "note": "via Google Places API"}
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
-            # Find place
-            find_resp = await client.get(
-                "https://maps.googleapis.com/maps/api/place/findplacefromtext/json",
+            # Use textsearch for better partial-name matching
+            search_resp = await client.get(
+                "https://maps.googleapis.com/maps/api/place/textsearch/json",
                 params={
-                    "input": reference.business_name,
-                    "inputtype": "textquery",
-                    "fields": "place_id,formatted_address,name",
+                    "query": reference.business_name,
                     "key": key,
                 },
             )
-            find_data = find_resp.json()
-            candidates = find_data.get("candidates") or []
+            search_data = search_resp.json()
+            status = search_data.get("status", "")
+            error_msg = search_data.get("error_message", "")
+            
+            if status == "REQUEST_DENIED":
+                result["status"] = "Error"
+                result["issues"] = [f"Google Places API error: {error_msg or 'Request denied'}"]
+                return result
+            if status == "ZERO_RESULTS":
+                result["status"] = "Not Found"
+                result["issues"] = [f"No Google Business Profile found for '{reference.business_name}'"]
+                return result
+            
+            candidates = search_data.get("results") or []
             if not candidates:
                 result["status"] = "Not Found"
+                result["issues"] = [f"No Google Business Profile found for '{reference.business_name}'"]
                 return result
-            place_id = candidates[0]["place_id"]
+            
+            place_id = candidates[0].get("place_id", "")
+            if not place_id:
+                result["status"] = "Not Found"
+                result["issues"] = ["Google returned results but no place_id"]
+                return result
 
             # Details
             detail_resp = await client.get(

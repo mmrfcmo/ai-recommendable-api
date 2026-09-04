@@ -226,7 +226,23 @@ async def run_nap_check(business_name: str, address: str, postcode: str, phone: 
     google = await check_google(reference)
     brave = await check_brave(reference)
     dirs = [google, brave]
-    dirs.extend(long_tail_results(reference))
+
+    # Long-tail directories — always returned as unverified
+    LONG_TAIL = [
+        "Thomson Local", "Hotfrog", "Cylex",
+        "Yably", "Opendi", "Infobel", "N49",
+    ]
+    for name in LONG_TAIL:
+        dirs.append({
+            "source": name,
+            "status": "Requires Verification",
+            "score": 0,
+            "name": None,
+            "address": None,
+            "phone": None,
+            "issues": ["Manual verification recommended"],
+            "note": "Check this directory manually for NAP consistency",
+        })
 
     # Summary
     matches = sum(1 for d in dirs if d["status"] == "Match")

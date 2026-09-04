@@ -81,7 +81,7 @@ def _extract_postcode(text: str) -> Optional[str]:
 class NAPReference:
     """The authoritative NAP to compare against."""
 
-    def __init__(self, business_name: str, address: str = "", postcode: str = "", phone: str = ""):
+    def __init__(self, business_name: str, address: str = "", postcode: str = "", phone: str = "", country: str = "UK"):
         self.business_name = (business_name or "").strip()
         self.address = (address or "").strip()
         self.postcode = _extract_postcode(postcode) or _extract_postcode(address) or ""
@@ -142,13 +142,6 @@ async def check_google(reference: NAPReference) -> Dict:
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
             # Use the new Places API (v1) searchText
-            # Build query with location context if available
-            query_text = reference.business_name
-            if reference.postcode:
-                query_text += " " + reference.postcode
-            elif reference.address:
-                query_text += " " + reference.address
-            
             search_resp = await client.post(
                 "https://places.googleapis.com/v1/places:searchText",
                 headers={
@@ -157,7 +150,7 @@ async def check_google(reference: NAPReference) -> Dict:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "textQuery": query_text,
+                    "textQuery": reference.business_name,
                     "maxResultCount": 1,
                 },
             )
@@ -364,9 +357,9 @@ async def check_web_directories(reference: NAPReference) -> List[Dict]:
     return results
 
 
-async def run_nap_check(business_name: str, address: str, postcode: str, phone: str) -> Dict:
+async def run_nap_check(business_name: str, address: str, postcode: str, phone: str, country: str = "UK") -> Dict:
     """Run a full NAP consistency check."""
-    reference = NAPReference(business_name, address, postcode, phone)
+    reference = NAPReference(business_name, address, postcode, phone, country)
 
     google = await check_google(reference)
     brave = await check_brave(reference)

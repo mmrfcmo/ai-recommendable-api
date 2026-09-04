@@ -9,6 +9,7 @@ from app.api.v1.discoverability import router as discoverability_router
 from app.api.v1.readiness import router as readiness_router
 from app.api.v1.bookings import router as bookings_router
 from app.api.v1.fulfilment_routes import router as fulfilment_router
+from app.api.v1.nap_checker import router as nap_checker_router
 import app.models  # noqa — ensure models are loaded
 import app.models.workflow_db  # noqa
 import os
@@ -40,6 +41,7 @@ app.include_router(discoverability_router)
 app.include_router(readiness_router)
 app.include_router(bookings_router)
 app.include_router(fulfilment_router)
+app.include_router(nap_checker_router)
 
 
 @app.get("/health")

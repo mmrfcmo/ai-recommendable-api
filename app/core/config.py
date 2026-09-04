@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     openai_api_key: Optional[str] = None
     google_places_api_key: Optional[str] = None
+    brave_api_key: Optional[str] = None
     cors_origins: str = "https://ai-recommendable.com,http://localhost:3000,http://localhost:5173"
 
     gmail_email: Optional[str] = None

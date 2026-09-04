@@ -221,6 +221,84 @@ async def check_brave(reference: NAPReference) -> Dict:
     return result
 
 
+
+async def check_web_directories(reference: NAPReference) -> List[Dict]:
+    """Search the web for NAP mentions across directories using DuckDuckGo (free, no API key)."""
+    import urllib.parse
+    
+    results = []
+    query = f"{reference.business_name} {reference.postcode or reference.address}"
+    
+    try:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            # Use DuckDuckGo HTML search (free, no API key needed)
+            search_url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
+            resp = await client.get(search_url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            })
+            html = resp.text
+            
+            # Simple check for directory mentions in search results
+            directory_keywords = {
+                "Yell": ["yell.com", "yellbusiness"],
+                "Hotfrog": ["hotfrog"],
+                "Cylex": ["cylex"],
+                "Thomson Local": ["thomsonlocal"],
+                "Yably": ["yably"],
+                "Opendi": ["opendi"],
+                "N49": ["n49"],
+                "Infobel": ["infobel"],
+                "FreeIndex": ["freeindex"],
+                "TouchLocal": ["touchlocal"],
+                "Bizzy": ["bizzy"],
+            }
+            
+            # Check if business name appears in results at all
+            business_lower = reference.business_name.lower()
+            has_mention = business_lower in html.lower()
+            
+            for dir_name, keywords in directory_keywords.items():
+                found = any(kw in html.lower() for kw in keywords)
+                if found:
+                    results.append({
+                        "source": dir_name,
+                        "status": "Found",
+                        "score": 65,
+                        "name": reference.business_name,
+                        "address": None,
+                        "phone": None,
+                        "issues": ["Listing found — check NAP details manually"],
+                        "note": "Business appears in search results for this directory",
+                    })
+                else:
+                    results.append({
+                        "source": dir_name,
+                        "status": "Not Found",
+                        "score": 0,
+                        "name": None,
+                        "address": None,
+                        "phone": None,
+                        "issues": [f"No listing detected for {dir_name}"],
+                        "note": "Not found in top search results",
+                    })
+                    
+    except Exception as e:
+        logger.error(f"Web directory search failed: {e}")
+        for name in ["Yell", "Hotfrog", "Cylex", "Thomson Local", "Yably", "Opendi", "N49", "Infobel", "FreeIndex", "TouchLocal", "Bizzy"]:
+            results.append({
+                "source": name,
+                "status": "Error",
+                "score": 0,
+                "name": None,
+                "address": None,
+                "phone": None,
+                "issues": [f"Search failed: {str(e)[:60]}"],
+                "note": "Could not complete web search",
+            })
+    
+    return results
+
+
 async def run_nap_check(business_name: str, address: str, postcode: str, phone: str) -> Dict:
     """Run a full NAP consistency check."""
     reference = NAPReference(business_name, address, postcode, phone)
@@ -229,22 +307,9 @@ async def run_nap_check(business_name: str, address: str, postcode: str, phone: 
     brave = await check_brave(reference)
     dirs = [google, brave]
 
-    # Long-tail directories — always returned as unverified
-    LONG_TAIL = [
-        "Thomson Local", "Hotfrog", "Cylex",
-        "Yably", "Opendi", "Infobel", "N49",
-    ]
-    for name in LONG_TAIL:
-        dirs.append({
-            "source": name,
-            "status": "Requires Verification",
-            "score": 0,
-            "name": None,
-            "address": None,
-            "phone": None,
-            "issues": ["Manual verification recommended"],
-            "note": "Check this directory manually for NAP consistency",
-        })
+    # Web search for directory listings
+    web_results = await check_web_directories(reference)
+    dirs.extend(web_results)
 
     # Summary
     matches = sum(1 for d in dirs if d["status"] == "Match")

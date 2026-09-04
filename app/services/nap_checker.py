@@ -180,6 +180,45 @@ async def check_google(reference: NAPReference) -> Dict:
     return result
 
 
+
+async def check_brave(reference: NAPReference) -> Dict:
+    """Check NAP via Brave Search (free API, broad web coverage)."""
+    key = settings.brave_api_key if hasattr(settings, "brave_api_key") else None
+    if not key:
+        return {"source": "Web (Brave Search)", "status": "Not Checked", "score": 0,
+                "issues": ["Brave Search API key not configured"]}
+
+    result = {"source": "Web (Brave Search)", "status": "Not Found", "score": 0,
+              "name": None, "address": None, "phone": None, "issues": [], "note": "via Brave Search API"}
+    try:
+        query = f"{reference.business_name} {reference.postcode or ''}"
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            resp = await client.get(
+                "https://api.search.brave.com/res/v1/web/search",
+                params={"q": query, "count": 5},
+                headers={"X-Subscription-Token": key, "Accept": "application/json"},
+            )
+            data = resp.json()
+            web_results = (data.get("web", {}) or {}).get("results") or []
+            mentions = [r.get("title", "") + " " + (r.get("description") or "") for r in web_results]
+            combined = " ".join(mentions).lower()
+            has_name = reference.business_name.lower() in combined
+            if has_name:
+                result["status"] = "Mention Found"
+                result["score"] = 70
+                result["issues"] = []
+                result["note"] = f"Business mentioned in {len(web_results)} search results — manual directory review recommended"
+            else:
+                result["status"] = "No Clear Mentions"
+                result["score"] = 0
+                result["issues"] = ["Business not clearly found via web search"]
+    except Exception as e:
+        logger.error(f"Brave NAP check failed: {e}")
+        result["status"] = "Error"
+        result["issues"] = [f"Search error: {str(e)[:80]}"]
+    return result
+
+
 async def run_nap_check(business_name: str, address: str, postcode: str, phone: str) -> Dict:
     """Run a full NAP consistency check."""
     reference = NAPReference(business_name, address, postcode, phone)

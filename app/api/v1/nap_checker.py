@@ -19,6 +19,7 @@ class NAPCheckRequest(BaseModel):
     address: Optional[str] = Field(default="", max_length=512)
     postcode: Optional[str] = Field(default="", max_length=20)
     phone: Optional[str] = Field(default="", max_length=40)
+    country: Optional[str] = Field(default="UK", max_length=100)
 
 
 class NAPCheckResponse(BaseModel):
@@ -40,4 +41,5 @@ async def check_nap(req: NAPCheckRequest):
         address=req.address or "",
         postcode=req.postcode or "",
         phone=req.phone or "",
+        country=req.country or "UK",
     )

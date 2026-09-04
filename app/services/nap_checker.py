@@ -184,7 +184,8 @@ async def check_google(reference: NAPReference) -> Dict:
     return result
 
 async def check_brave(reference: NAPReference) -> Dict:
-    """Check NAP via Brave Search (free API, broad web coverage)."""
+    """Check NAP via Brave Search (free API, broad web coverage).
+    Returns the actual result URLs and attempts NAP extraction from each."""
     key = settings.brave_api_key if hasattr(settings, "brave_api_key") else None
     if not key:
         return {"source": "Web (Brave Search)", "status": "Not Checked", "score": 0,
@@ -202,14 +203,71 @@ async def check_brave(reference: NAPReference) -> Dict:
             )
             data = resp.json()
             web_results = (data.get("web", {}) or {}).get("results") or []
+            
+            # Collect all result details
+            found_results = []
+            for r in web_results:
+                title = r.get("title", "")
+                url = r.get("url", "")
+                desc = r.get("description", "")
+                found_results.append({"title": title, "url": url, "snippet": desc})
+            
             mentions = [r.get("title", "") + " " + (r.get("description") or "") for r in web_results]
             combined = " ".join(mentions).lower()
             has_name = reference.business_name.lower() in combined
+            
             if has_name:
+                # Try to extract NAP from each result page
+                nap_details = []
+                for fr in found_results:
+                    fr_url = fr["url"]
+                    try:
+                        page_resp = await client.get(fr_url, timeout=8.0, follow_redirects=True,
+                            headers={"User-Agent": "Mozilla/5.0"})
+                        page_text = page_resp.text
+                        
+                        # Simple NAP extraction from the page
+                        import re
+                        page_lower = page_text.lower()
+                        
+                        # Find business name
+                        name_found = reference.business_name.lower() in page_lower
+                        
+                        # Find phone (UK format)
+                        phone_match = re.search(r'(?:\b0\d{2,4}[\s-]?\d{3,4}[\s-]?\d{3,4}\b)', page_text)
+                        phone_found = phone_match.group(1) if phone_match else None
+                        
+                        # Find postcode
+                        pc_match = re.search(r'\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b', page_text.upper())
+                        postcode_found = pc_match.group(1) if pc_match else None
+                        
+                        nap_details.append({
+                            "url": fr_url[:80],
+                            "title": fr["title"][:60],
+                            "has_name": name_found,
+                            "phone_extracted": phone_found,
+                            "postcode_extracted": postcode_found,
+                        })
+                    except Exception:
+                        nap_details.append({
+                            "url": fr_url[:80],
+                            "title": fr["title"][:60],
+                            "has_name": False,
+                            "phone_extracted": None,
+                            "postcode_extracted": None,
+                        })
+                
                 result["status"] = "Mention Found"
                 result["score"] = 70
                 result["issues"] = []
-                result["note"] = f"Business mentioned in {len(web_results)} search results — manual directory review recommended"
+                result["found_results"] = found_results
+                result["nap_details"] = nap_details
+                result["note"] = f"Business mentioned in {len(web_results)} search results"
+                
+                # Add a readable summary
+                result["mentions_summary"] = "\n".join([
+                    f"• {r['title'][:60]} — {r['url'][:60]}" for r in found_results
+                ])
             else:
                 result["status"] = "No Clear Mentions"
                 result["score"] = 0

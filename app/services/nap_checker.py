@@ -131,7 +131,7 @@ class NAPReference:
 
 
 async def check_google(reference: NAPReference) -> Dict:
-    """Check NAP against Google Places API (free tier)."""
+    """Check NAP against Google Places API (new) (free tier)."""
     key = settings.google_places_api_key
     if not key:
         return {"source": "Google Business Profile", "status": "Not Checked", "score": 0,
@@ -141,61 +141,47 @@ async def check_google(reference: NAPReference) -> Dict:
               "name": None, "address": None, "phone": None, "issues": [], "note": "via Google Places API"}
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
-            # Use textsearch for better partial-name matching
-            search_resp = await client.get(
-                "https://maps.googleapis.com/maps/api/place/textsearch/json",
-                params={
-                    "query": reference.business_name,
-                    "key": key,
+            # Use the new Places API (v1) searchText
+            search_resp = await client.post(
+                "https://places.googleapis.com/v1/places:searchText",
+                headers={
+                    "X-Goog-Api-Key": key,
+                    "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "textQuery": reference.business_name,
+                    "maxResultCount": 1,
                 },
             )
             search_data = search_resp.json()
-            status = search_data.get("status", "")
-            error_msg = search_data.get("error_message", "")
             
-            if status == "REQUEST_DENIED":
+            if "error" in search_data:
+                err = search_data["error"]
+                msg = err.get("message", "Unknown error")
                 result["status"] = "Error"
-                result["issues"] = [f"Google Places API error: {error_msg or 'Request denied'}"]
+                result["issues"] = [f"Google Places API error: {msg}"]
                 return result
-            if status == "ZERO_RESULTS":
+            
+            places = search_data.get("places") or []
+            if not places:
                 result["status"] = "Not Found"
                 result["issues"] = [f"No Google Business Profile found for '{reference.business_name}'"]
                 return result
             
-            candidates = search_data.get("results") or []
-            if not candidates:
-                result["status"] = "Not Found"
-                result["issues"] = [f"No Google Business Profile found for '{reference.business_name}'"]
-                return result
+            p = places[0]
+            place_id = p.get("id", "")
+            display_name = (p.get("displayName") or {}).get("text", "")
+            formatted_address = p.get("formattedAddress", "")
+            listing_phone = p.get("nationalPhoneNumber") or p.get("internationalPhoneNumber") or ""
             
-            place_id = candidates[0].get("place_id", "")
-            if not place_id:
-                result["status"] = "Not Found"
-                result["issues"] = ["Google returned results but no place_id"]
-                return result
-
-            # Details
-            detail_resp = await client.get(
-                "https://maps.googleapis.com/maps/api/place/details/json",
-                params={
-                    "place_id": place_id,
-                    "fields": "name,formatted_address,formatted_phone_number,international_phone_number",
-                    "key": key,
-                },
-            )
-            d = detail_resp.json().get("result") or {}
-            listing_name = d.get("name", "")
-            listing_address = d.get("formatted_address", "")
-            listing_phone = d.get("formatted_phone_number") or d.get("international_phone_number") or ""
-            result.update(name=listing_name, address=listing_address, phone=listing_phone)
-            result.update(reference.compare(listing_name, listing_address, listing_phone))
+            result.update(name=display_name, address=formatted_address, phone=listing_phone)
+            result.update(reference.compare(display_name, formatted_address, listing_phone))
     except Exception as e:
         logger.error(f"Google NAP check failed: {e}")
         result["status"] = "Error"
         result["issues"] = [f"Google check error: {str(e)[:80]}"]
     return result
-
-
 
 async def check_brave(reference: NAPReference) -> Dict:
     """Check NAP via Brave Search (free API, broad web coverage)."""

@@ -5,8 +5,7 @@ and compares them against an authoritative NAP to identify inconsistencies.
 
 Data sources (free API tiers):
 - Google Places API (Google Business Profile data)
-- Yelp Fusion API
-- Bing local search (best-effort via search)
+- Brave Search API (broad web coverage)
 
 The service deliberately avoids overclaiming: directories that require
 authentication or block anonymous access are reported as requiring
@@ -25,7 +24,6 @@ logger = logging.getLogger("ai_recommendable.nap_checker")
 CORE_DIRECTORIES = [
     "Google Business Profile",
     "Bing Places",
-    "Yelp",
     "Facebook Business",
     "Yell",
     "Apple Maps",
@@ -182,71 +180,13 @@ async def check_google(reference: NAPReference) -> Dict:
     return result
 
 
-async def check_yelp(reference: NAPReference) -> Dict:
-    """Check NAP against Yelp Fusion API (free tier)."""
-    key = settings.yelp_api_key if hasattr(settings, "yelp_api_key") else None
-    if not key:
-        return {"source": "Yelp", "status": "Not Checked", "score": 0,
-                "issues": ["Yelp Fusion API key not configured"]}
-
-    result = {"source": "Yelp", "status": "Not Found", "score": 0,
-              "name": None, "address": None, "phone": None, "issues": [], "note": "via Yelp Fusion API"}
-    try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            resp = await client.get(
-                "https://api.yelp.com/v3/businesses/search",
-                params={
-                    "term": reference.business_name,
-                    "location": reference.postcode or reference.address,
-                    "limit": 1,
-                },
-                headers={"Authorization": f"Bearer {key}"},
-            )
-            businesses = resp.json().get("businesses") or []
-            if not businesses:
-                result["status"] = "Not Found"
-                return result
-            b = businesses[0]
-            loc = b.get("location") or {}
-            listing_name = b.get("name", "")
-            listing_address = ", ".join(filter(None, [loc.get("address1"), loc.get("postal_code")]))
-            listing_phone = b.get("display_phone") or b.get("phone") or ""
-            result.update(name=listing_name, address=listing_address, phone=listing_phone)
-            result.update(reference.compare(listing_name, listing_address, listing_phone))
-    except Exception as e:
-        logger.error(f"Yelp NAP check failed: {e}")
-        result["status"] = "Error"
-    return result
-
-
-def long_tail_results(reference: NAPReference) -> List[Dict]:
-    """Produce entries for long-tail directories.
-
-    These directories generally block anonymous scraping, so we report them
-    as requiring verification rather than claiming a false result.
-    """
-    entries = []
-    for name in LONG_TAIL_DIRECTORIES:
-        entries.append({
-            "source": name,
-            "status": "Requires Verification",
-            "score": 0,
-            "name": None,
-            "address": None,
-            "phone": None,
-            "issues": ["Manual verification recommended — directory not auto-scanned"],
-            "note": "Check this directory manually for NAP consistency",
-        })
-    return entries
-
-
 async def run_nap_check(business_name: str, address: str, postcode: str, phone: str) -> Dict:
     """Run a full NAP consistency check."""
     reference = NAPReference(business_name, address, postcode, phone)
 
     google = await check_google(reference)
-    yelp = await check_yelp(reference)
-    dirs = [google, yelp]
+    brave = await check_brave(reference)
+    dirs = [google, brave]
     dirs.extend(long_tail_results(reference))
 
     # Summary

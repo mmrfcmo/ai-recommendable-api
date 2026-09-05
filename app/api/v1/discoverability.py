@@ -23,8 +23,8 @@ async def create_discoverability_report(
     if not website.startswith(("http://", "https://")):
         website = f"https://{website}"
 
-    # Run the scan
-    signals, passed_count = await scan_trust_signals(website)
+    # Run the enhanced scan with Google Places API verification
+    signals, passed_count = await scan_trust_signals(website, req.business_name)
     total_score = sum(s.score for s in signals)
     total_max = sum(s.max_score for s in signals)
     percentage = round((total_score / total_max) * 100) if total_max > 0 else 0

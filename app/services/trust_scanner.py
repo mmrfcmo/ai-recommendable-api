@@ -1,9 +1,12 @@
-"""Discoverability Scanner - checks 6 trust signals."""
+"""Enhanced Discoverability Scanner - checks 5 trust signals with Google Places API verification."""
 import re
 import httpx
 from bs4 import BeautifulSoup
-from typing import Tuple, List
+from typing import Tuple, List, Optional, Dict
 from app.schemas.discoverability import SignalResult
+from app.core.config import settings
+
+logger = logging.getLogger("ai_recommendable.trust_scanner")
 
 TRUST_SIGNALS = [
     ("schema_org", "Schema.org Markup", 20),
@@ -15,13 +18,66 @@ TRUST_SIGNALS = [
 ]
 
 
-async def scan_trust_signals(url: str) -> Tuple[List[SignalResult], int]:
-    """Scan a website for discoverability trust signals."""
+async def check_google_places(business_name: str) -> Dict:
+    """Check business data against Google Places API."""
+    key = settings.google_places_api_key
+    if not key:
+        return {"found": False, "name": None, "address": None, "phone": None, 
+                "rating": None, "reviews_count": None, "error": "API key not configured"}
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            search_resp = await client.post(
+                "https://places.googleapis.com/v1/places:searchText",
+                headers={
+                    "X-Goog-Api-Key": key,
+                    "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.rating,places.userRatingCount",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "textQuery": business_name,
+                    "maxResultCount": 1,
+                },
+            )
+            search_data = search_resp.json()
+            
+            if "error" in search_data:
+                return {"found": False, "error": search_data["error"].get("message", "Unknown error")}
+            
+            places = search_data.get("places") or []
+            if not places:
+                return {"found": False, "error": "No Google Business Profile found"}
+            
+            p = places[0]
+            return {
+                "found": True,
+                "place_id": p.get("id", ""),
+                "name": (p.get("displayName") or {}).get("text", ""),
+                "address": p.get("formattedAddress", ""),
+                "phone": p.get("nationalPhoneNumber") or p.get("internationalPhoneNumber") or "",
+                "rating": p.get("rating"),
+                "reviews_count": p.get("userRatingCount"),
+            }
+    except Exception as e:
+        return {"found": False, "error": str(e)[:80]}
+
+
+async def scan_trust_signals(url: str, business_name: str = None) -> Tuple[List[SignalResult], int]:
+    """Scan a website for discoverability trust signals with Google Places verification."""
     if not url.startswith(("http://", "https://")):
         url = f"https://{url}"
 
     results = {}
     passed_count = 0
+    
+    # Extract business name from URL if not provided
+    if not business_name:
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc
+        business_name = domain.replace("www.", "").split(".")[0].capitalize()
+
+    # Fetch Google Places data in parallel with page scan
+    gbp_data = await check_google_places(business_name)
 
     try:
         async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
@@ -33,23 +89,59 @@ async def scan_trust_signals(url: str) -> Tuple[List[SignalResult], int]:
             # 1. Schema.org markup
             has_schema = bool(re.search(r'application/ld\+json|schema\.org|itemscope|itemtype', html, re.IGNORECASE))
             schema_count = len(re.findall(r'application/ld\+json', html, re.IGNORECASE))
+            
+            # Validate schema by attempting to parse JSON-LD blocks
+            valid_schema = 0
             if has_schema:
-                if schema_count >= 3:
-                    schema_score = 20
-                elif schema_count == 2:
-                    schema_score = 10
-                else:
-                    schema_score = 4
-            else:
-                schema_score = 0
-            schema_detail = f"Schema.org markup found ({schema_count} blocks)" if has_schema else "No schema.org markup detected"
-            results["schema_org"] = SignalResult(name="schema_org", passed=has_schema, score=schema_score, max_score=20, details=schema_detail)
+                jsonld_blocks = re.findall(r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', html, re.IGNORECASE | re.DOTALL)
+                for block in jsonld_blocks:
+                    try:
+                        import json
+                        data = json.loads(block.strip())
+                        if "@context" in data and "@type" in data:
+                            valid_schema += 1
+                    except:
+                        pass  # Invalid JSON-LD, don't count it
+            
+            schema_detail = f"Schema.org markup found ({schema_count} blocks, {valid_schema} valid)" if valid_schema > 0 else \
+                           f"Schema.org markup found ({schema_count} blocks, but none valid)" if has_schema else \
+                           "No schema.org markup detected"
+            schema_score = min(20, valid_schema * 7) if valid_schema > 0 else (4 if has_schema else 0)
+            results["schema_org"] = SignalResult(name="schema_org", passed=valid_schema > 0, score=schema_score, max_score=20, details=schema_detail)
 
-            # 2. NAP consistency
-            nap_found = bool(re.search(r'\d{10,15}|name.*address|phone|contact|tel:', text))
-            nap_score = 15 if nap_found else 0
-            nap_detail = "Contact info found" if nap_found else "No clear NAP (name, address, phone) found"
-            results["nap_consistency"] = SignalResult(name="nap_consistency", passed=nap_found, score=nap_score, max_score=15, details=nap_detail)
+            # 2. NAP consistency - enhanced with Google Places data
+            nap_found = bool(re.search(r'\d{10,15}|name.*address|phone|contact|tel:', text))
+            
+            # Check if GBP data matches website NAP
+            nap_issues = []
+            if gbp_data.get("found"):
+                gbp_name = gbp_data.get("name", "").lower()
+                gbp_address = gbp_data.get("address", "").lower()
+                gbp_phone = gbp_data.get("phone", "")
+                
+                # Check if business name on website matches GBP
+                site_has_name = bool(re.search(re.escape(gbp_name[:20]), text)) if gbp_name else False
+                if not site_has_name and gbp_name:
+                    nap_issues.append(f"Business name may differ from Google Business Profile ('{gbp_data['name']}')")
+                
+                # Check if phone matches
+                gbp_digits = re.sub(r"\D", "", gbp_phone)
+                site_has_phone = bool(re.search(re.escape(gbp_digits[-10:]), text)) if gbp_digits else False
+                if not site_has_phone and gbp_phone:
+                    nap_issues.append(f"Phone number may differ from Google Business Profile")
+                
+                nap_detail = f"Google Business Profile found: {gbp_data['name']}"
+                if nap_issues:
+                    nap_detail += ". " + ". ".join(nap_issues)
+                nap_score = 15 if nap_found and len(nap_issues) == 0 else (10 if nap_found else 5 if nap_found else 0)
+            else:
+                nap_detail = "Contact info found on website" if nap_found else "No clear NAP (name, address, phone) found"
+                nap_score = 10 if nap_found else 0
+                if gbp_data.get("error") and "No Google Business Profile" in gbp_data["error"]:
+                    nap_issues.append("No Google Business Profile found")
+                    nap_detail += ". No Google Business Profile detected"
+            
+            results["nap_consistency"] = SignalResult(name="nap_consistency", passed=nap_score >= 10, score=nap_score, max_score=15, details=nap_detail)
 
             # 3. Entity clarity
             entity_signals = 0
@@ -85,7 +177,7 @@ async def scan_trust_signals(url: str) -> Tuple[List[SignalResult], int]:
             content_detail = f"Deep content found ({content_signals}/5 signals, ~{word_count} words)" if content_passed else f"Limited content depth ({content_signals}/5 signals, ~{word_count} words)"
             results["content_depth"] = SignalResult(name="content_depth", passed=content_passed, score=content_score, max_score=20, details=content_detail)
 
-            # 5. Trust signals
+            # 5. Trust signals - enhanced with Google Places review data
             trust_signal_count = 0
             if re.search(r'(testimonial|review|rating|trustpilot)', text):
                 trust_signal_count += 1
@@ -95,9 +187,18 @@ async def scan_trust_signals(url: str) -> Tuple[List[SignalResult], int]:
                 trust_signal_count += 1
             if re.search(r'(client|customer|member|subscriber)', text):
                 trust_signal_count += 1
-            trust_score = min(15, trust_signal_count * 4)
-            trust_passed = trust_score >= 10
-            trust_detail = f"Trust signals found ({trust_signal_count}/4)" if trust_passed else f"Few trust signals ({trust_signal_count}/4 found)"
+            
+            # Add Google Places review data
+            gbp_reviews = ""
+            if gbp_data.get("found") and gbp_data.get("reviews_count") is not None:
+                gbp_reviews = f" | Google rating: {gbp_data.get('rating', 'N/A')} ({gbp_data.get('reviews_count', 0)} reviews)"
+                if gbp_data["reviews_count"] > 0:
+                    trust_signal_count += 1  # Bonus signal for having real reviews
+            
+            trust_score = min(15, trust_signal_count * 3)
+            trust_passed = trust_score >= 8
+            trust_detail = f"Trust signals found ({trust_signal_count}/5)" if trust_passed else f"Few trust signals ({trust_signal_count}/5 found)"
+            trust_detail += gbp_reviews
             results["trust_signals"] = SignalResult(name="trust_signals", passed=trust_passed, score=trust_score, max_score=15, details=trust_detail)
 
             # 6. Technical SEO
@@ -118,6 +219,8 @@ async def scan_trust_signals(url: str) -> Tuple[List[SignalResult], int]:
         for name, label, points in TRUST_SIGNALS:
             results[name] = SignalResult(name=name, passed=False, score=0, max_score=points, details=f"Connection failed: {str(e)[:80]}")
     except Exception as e:
+        import traceback
+        logger.error(f"Scan error: {traceback.format_exc()}")
         for name, label, points in TRUST_SIGNALS:
             results[name] = SignalResult(name=name, passed=False, score=0, max_score=points, details=f"Scan error: {str(e)[:80]}")
 

@@ -4,9 +4,12 @@ import httpx
 from bs4 import BeautifulSoup
 from typing import Tuple, List, Optional, Dict
 from app.schemas.discoverability import SignalResult
+import logging
 from app.core.config import settings
 
 logger = logging.getLogger("ai_recommendable.trust_scanner")
+
+
 
 TRUST_SIGNALS = [
     ("schema_org", "Schema.org Markup", 20),

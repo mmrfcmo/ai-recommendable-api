@@ -33,7 +33,15 @@ async def scan_trust_signals(url: str) -> Tuple[List[SignalResult], int]:
             # 1. Schema.org markup
             has_schema = bool(re.search(r'application/ld\+json|schema\.org|itemscope|itemtype', html, re.IGNORECASE))
             schema_count = len(re.findall(r'application/ld\+json', html, re.IGNORECASE))
-            schema_score = min(20, schema_count * 7) if has_schema else 0
+            if has_schema:
+                if schema_count >= 3:
+                    schema_score = 20
+                elif schema_count == 2:
+                    schema_score = 10
+                else:
+                    schema_score = 4
+            else:
+                schema_score = 0
             schema_detail = f"Schema.org markup found ({schema_count} blocks)" if has_schema else "No schema.org markup detected"
             results["schema_org"] = SignalResult(name="schema_org", passed=has_schema, score=schema_score, max_score=20, details=schema_detail)
 
@@ -70,10 +78,10 @@ async def scan_trust_signals(url: str) -> Tuple[List[SignalResult], int]:
             if soup.find_all(["ul", "ol", "table"]):
                 content_signals += 1
             word_count = len(text.split())
-            if word_count > 500:
+            if word_count > 800:
                 content_signals += 1
             content_score = min(20, content_signals * 4)
-            content_passed = content_score >= 8
+            content_passed = content_score >= 10
             content_detail = f"Deep content found ({content_signals}/5 signals, ~{word_count} words)" if content_passed else f"Limited content depth ({content_signals}/5 signals, ~{word_count} words)"
             results["content_depth"] = SignalResult(name="content_depth", passed=content_passed, score=content_score, max_score=20, details=content_detail)
 
@@ -88,7 +96,7 @@ async def scan_trust_signals(url: str) -> Tuple[List[SignalResult], int]:
             if re.search(r'(client|customer|member|subscriber)', text):
                 trust_signal_count += 1
             trust_score = min(15, trust_signal_count * 4)
-            trust_passed = trust_score >= 8
+            trust_passed = trust_score >= 10
             trust_detail = f"Trust signals found ({trust_signal_count}/4)" if trust_passed else f"Few trust signals ({trust_signal_count}/4 found)"
             results["trust_signals"] = SignalResult(name="trust_signals", passed=trust_passed, score=trust_score, max_score=15, details=trust_detail)
 

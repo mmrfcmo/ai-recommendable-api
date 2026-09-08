@@ -94,3 +94,14 @@ async def serve_scanner():
         with open(p) as f:
             return f.read()
     return "<h1>Scanner not found - upload to app/ folder</h1>"
+
+
+from fastapi.responses import HTMLResponse
+import os
+
+@app.get("/trust-scanner-a", response_class=HTMLResponse, include_in_schema=False)
+async def serve_scanner():
+    p = os.path.join(os.path.dirname(__file__), "trust-scanner-a.html")
+    if os.path.exists(p):
+        with open(p) as f: return f.read()
+    return "<h1>Scanner not found</h1>"

@@ -69,7 +69,7 @@ document.getElementById('sf').addEventListener('submit',async function(e){
 e.preventDefault();var u=document.getElementById('su').value.trim();if(!u)return;var d=u.replace('www.','').split('/')[0];var fu=u.indexOf('http')===0?u:'https://'+u;
 document.getElementById('sf').classList.add('hidden');document.getElementById('ld').classList.remove('hidden');document.getElementById('sb').disabled=true;
 document.getElementById('rd').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});document.getElementById('ps').textContent=d;
-document.getElementById('ls').textContent='Scanning...';await new Promise(function(r){setTimeout(r,800)});
+document.getElementById('ls').textContent='Analysing your website...';await new Promise(function(r){setTimeout(r,900)});
 var scores={schema:0,entity:0,content:0,trust:0,tech:0},details={schema:'',entity:'',content:'',trust:'',tech:''},total=0,respData=null;
 try{
 var res=await fetch('/api/v1/discoverability/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_name:d,website:fu,email:'scanner@internal.com'})});

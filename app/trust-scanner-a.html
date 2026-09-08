@@ -32,10 +32,10 @@ document.getElementById('rd').textContent=new Date().toLocaleDateString('en-GB',
 var scores={schema:0,entity:0,content:0,trust:0,tech:0},details={schema:'',entity:'',content:'',trust:'',tech:''},total=0,txt='';
 try{
   document.getElementById('ls').textContent='🌐 Contacting page reader...';await new Promise(function(r){setTimeout(r,2000)});
-  var resp=await window.fetch('https://r.jina.ai/http://'+d).catch(function(){return null});
-  if(!resp){document.getElementById('ls').textContent='⚠️ Reader not responding. Trying other methods...';await new Promise(function(r){setTimeout(r,2000)});throw 'no response';}
-  if(!resp.ok){document.getElementById('ls').textContent='⚠️ Reader error. Using estimates...';await new Promise(function(r){setTimeout(r,2000)});throw 'bad response';}
-  txt=await resp.text();document.getElementById('ls').textContent='✅ Content received! Analysing...';await new Promise(function(r){setTimeout(r,1500)});
+  var resp=await window.fetch("/api/v1/discoverability/report",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({business_name:d,website:"https://"+d,email:"scanner@internal.com"})}).catch(function(){return null});
+  if(!resp){document.getElementById('ls').textContent='📡 Calling API. Trying other methods...';await new Promise(function(r){setTimeout(r,2000)});throw 'no response';}
+  if(!resp.ok){document.getElementById('ls').textContent='⚠️ API error. Using estimates...';await new Promise(function(r){setTimeout(r,2000)});throw 'bad response';}
+  txt=await resp.text();document.getElementById('ls').textContent='✅ Results received! Analysing...';await new Promise(function(r){setTimeout(r,1500)});
   var l=txt.toLowerCase(),wc=txt.split(/\s+/).length||0;
   document.getElementById('ls').textContent='📋 Checking Schema.org...';await new Promise(function(r){setTimeout(r,1500)});
   var s1=l.indexOf('ld+json')>-1?30:5;s1+=l.indexOf('localbusiness')>-1?25:0;s1+=l.indexOf('organization')>-1||l.indexOf('organisation')>-1?15:0;s1+=l.indexOf('aggregaterating')>-1?15:0;s1+=l.indexOf('openinghours')>-1?10:0;s1+=l.indexOf('service')>-1?5:0;scores.schema=Math.min(100,s1);details.schema=scores.schema>=70?'Good schema markup':scores.schema>=40?'Some schema found':'Limited schema';

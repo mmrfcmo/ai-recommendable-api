@@ -214,5 +214,5 @@ else{document.getElementById('ot').textContent='Complete Optimisation Package';d
 var pts=[];if(wc===0){pts=['"Your site is performing at a leading level."','"We recommend ongoing monitoring."','"Monthly maintenance starts at £499/mo."','"Would you like to book a 20-minute call?"']}
 else{pts=['"Your current score of '+total+'/100 is '+(total>=60?'above':'below')+' the industry average of 53."','"The biggest opportunity is in '+pr[0].l+'"','"We can address '+wc+' signal'+(wc>1?'s':'')+' from £'+wp+'."','"Would you like to book a 20-minute call to discuss next steps?"']}
 document.getElementById('ctp').innerHTML=pts.map(function(p){return '<li class="text-zinc-300 text-xs">'+p+'</li>'}).join('');
-document.getElementById('ld').classList.add('hidden');document.getElementById('rc').classList.remove('hidden');setTimeout(function(){document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'})},200)});
+document.getElementById('ld').classList.add('hidden');document.getElementById('rc').classList.remove('hidden');setTimeout(function(){document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'})},200);setTimeout(function(){if(typeof generateProposal==='function')generateProposal()},500)});
 </script></body></html>

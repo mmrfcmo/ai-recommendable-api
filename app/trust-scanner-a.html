@@ -9,7 +9,118 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+function generateProposal() {
+  document.getElementById('proposalSection').classList.remove('hidden');
+  var total = document.getElementById('rsc').textContent;
+  var domain = document.getElementById('ps').textContent;
+  var grade = document.getElementById('gt').textContent;
+  
+  var signalConfig = [
+    { key: 'schema', label: 'Schema Markup', desc: 'Add Organisation, LocalBusiness and Service JSON-LD schema' },
+    { key: 'entity', label: 'Entity & NAP', desc: 'Standardise business identity across platforms' },
+    { key: 'content', label: 'Content Gap Analysis', desc: 'Add FAQ sections, expand service pages, build resource hub' },
+    { key: 'trust', label: 'Reputation & Trust', desc: 'Display testimonials, link to reviews, showcase awards' },
+    { key: 'tech', label: 'Technical SEO', desc: 'Fix meta descriptions, heading structure, HTTPS' }
+  ];
+  
+  // Additional boost services for 50-90% scores
+  var boostConfig = [
+    { key: 'authority', label: 'Authority Building', desc: 'Build backlinks and industry citations', price: 350 },
+    { key: 'social', label: 'Social Proof Integration', desc: 'Add social media feeds, embed reviews, case studies', price: 250 },
+    { key: 'local', label: 'Local SEO Boost', desc: 'Google Business Profile optimisation, local citations', price: 300 },
+    { key: 'content', label: 'Content Marketing', desc: 'Blog posts, articles, and resource content creation', price: 400 },
+    { key: 'analytics', label: 'Analytics & Tracking', desc: 'Set up GA4, conversion tracking, heatmaps', price: 200 },
+    { key: 'speed', label: 'Speed Optimisation', desc: 'Page speed improvements, Core Web Vitals', price: 250 },
+    { key: 'accessibility', label: 'Accessibility Audit', desc: 'WCAG compliance, ADA-friendly improvements', price: 300 },
+    { key: 'security', label: 'Security Hardening', desc: 'SSL, HTTPS enforcement, security headers', price: 200 }
+  ];
+  
+  var scores = {};
+  ['.text-2xl.font-bold.text-white'].forEach(function(c){});
+  
+  var allServices = [];
+  signalConfig.forEach(function(svc) {
+    var val = scores[svc.key] || 0;
+    if (val < 100) {
+      allServices.push({
+        key: svc.key, label: svc.label, desc: svc.desc,
+        score: val,
+        isRequired: val < 50,
+        isOptional: val >= 50
+      });
+    }
+  });
+  
+  allServices.sort(function(a, b) { return a.score - b.score; });
+  
+  var proposalHtml = '<div id="proposalOutput" class="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-8">' +
+    '<div class="text-center mb-6">' +
+    '<div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-900 to-purple-700 text-white flex items-center justify-center text-2xl font-extrabold mx-auto shadow-lg shadow-purple-900/50 ring-2 ring-amber-400/50">AI-R</div>' +
+    '<h2 class="text-2xl font-bold text-white mt-4">AI Trust Optimisation Proposal</h2>' +
+    '<p class="text-zinc-400 text-sm mt-1">Prepared for <strong class="text-white">' + domain + '</strong></p>' +
+    '<p class="text-zinc-500 text-xs mt-1">' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '</p></div>' +
+    '<div class="grid sm:grid-cols-2 gap-4 mb-6">' +
+    '<div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-center">' +
+    '<p class="text-xs text-zinc-500 uppercase">Current Score</p>' +
+    '<p class="text-3xl font-extrabold text-amber-400 mt-1">' + total + '<span class="text-sm text-zinc-500">/100</span></p>' +
+    '<p class="text-xs text-zinc-400 mt-1">' + grade + '</p></div>' +
+    '<div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-center">' +
+    '<p class="text-xs text-zinc-500 uppercase">Industry Average</p>' +
+    '<p class="text-3xl font-extrabold text-zinc-400 mt-1">53<span class="text-sm text-zinc-500">/100</span></p></div></div>';
+  
+  // Add boost services as checkboxes
+  proposalHtml += '<div class="mb-6"><h3 class="text-sm font-bold text-white mb-3">📈 Additional Trust Signals to Boost Your Score</h3><p class="text-xs text-zinc-400 mb-3">Select additional services to enhance your trust signals and improve your score from 50% to 90%.</p><div class="space-y-2" id="boostChecklist">';
+  boostConfig.forEach(function(b) {
+    proposalHtml += '<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-3 flex items-center justify-between">' +
+      '<div class="flex items-center gap-3">' +
+      '<input type="checkbox" id="boost_' + b.key + '" class="boost-checkbox w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500" onchange="updateBoostTotal()">' +
+      '<div><p class="text-sm font-bold text-white">' + b.label + '</p><p class="text-xs text-zinc-400">' + b.desc + '</p></div></div>' +
+      '<div class="text-right"><p class="text-sm font-bold text-amber-400">£' + b.price + '</p></div></div>';
+  });
+  proposalHtml += '</div></div>';
+  
+  proposalHtml += '<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 mb-4">' +
+    '<div class="space-y-2 text-sm">' +
+    '<div class="flex justify-between"><span class="text-zinc-400">Total Additional Investment</span><span class="text-white font-bold" id="boostTotal">£0</span></div></div></div>' +
+    '<div class="text-xs text-zinc-500 p-3 rounded-lg bg-zinc-900 border border-zinc-800 mb-6">' +
+    '<p class="font-medium text-zinc-400 mb-1">Next Steps:</p>' +
+    '<ol class="space-y-1 list-decimal list-inside">' +
+    '<li>Book a 20-30 minute call to walk through the report</li>' +
+    '<li>We confirm scope and any specific requirements</li>' +
+    '<li>We begin implementation within 48 hours of sign-off</li>' +
+    '<li>You receive a before/after report showing score improvement</li></ol></div>' +
+    '<div class="text-center">' +
+    '<button onclick="window.print()" class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-900 hover:bg-amber-400 transition">💵 Print / Save as PDF</button>' +
+    '<p class="text-xs text-zinc-600 mt-3">AI-Recommendable — AI Trust Optimisation™</p></div></div>';
+  
+  var existing = document.getElementById('proposalOutput');
+  if (existing) existing.remove();
+  
+  var insertPoint = document.getElementById('ot');
+  while (insertPoint && insertPoint.id !== 'rc' && insertPoint.tagName !== 'SECTION') {
+    insertPoint = insertPoint.parentNode;
+  }
+  if (insertPoint) {
+    insertPoint.insertAdjacentHTML('afterend', proposalHtml);
+  }
+  
+  window.__boostConfig = boostConfig;
+  var output = document.getElementById('proposalOutput');
+  if (output) output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateBoostTotal() {
+  var config = window.__boostConfig || [];
+  var total = 0;
+  config.forEach(function(b) {
+    var cb = document.getElementById('boost_' + b.key);
+    if (cb && cb.checked) total += b.price;
+  });
+  var el = document.getElementById('boostTotal');
+  if (el) el.textContent = '£' + total;
+}
+</script>
 <style>
 html,body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}body{-webkit-font-smoothing:antialiased}
 @media print{.no-print{display:none!important}.rounded-2xl,.rounded-xl,.rounded-lg{break-inside:avoid}body{background:white!important;color:black!important}.bg-zinc-950,.bg-zinc-900,.bg-zinc-800{background:#fafafa!important}.text-white,.text-zinc-300,.text-zinc-400{color:#111!important}.text-amber-400{color:#d97706!important}.border-zinc-800,.border-zinc-700{border-color:#ddd!important}}
@@ -51,7 +162,9 @@ html,body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}body{-webkit-fo
 <div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-400">Timeline</span><span class="text-white font-bold" id="otl">—</span></div>
 </div>
 <div class="text-xs text-zinc-500 mt-4 p-3 rounded-lg bg-zinc-950 border border-zinc-800"><p class="font-medium text-zinc-400 mb-1">💡 Talking points for the call:</p><ul id="ctp" class="space-y-1"><li class="text-zinc-500">Generating...</li></ul></div>
-<a href="https://ai-recommendable.com/contact.html" target="_blank" class="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-5 py-3 text-sm font-bold text-zinc-900 hover:bg-amber-400 transition no-print">📞 Book Your Free Discovery Call →</a>
+<div id="proposalSection" class="hidden mt-6 p-4 rounded-xl border border-emerald-800/30 bg-emerald-900/10"><p class="text-sm text-emerald-400 font-medium mb-2">✅ Proposal ready!</p><p class="text-xs text-zinc-300 mb-3">Your proposal has been generated below. Review it, then print or save as PDF.</p><button onclick="document.getElementById('proposalOutput').scrollIntoView({behavior:'smooth'})" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition">View Proposal →</button></div>
+<button onclick="generateProposal()" class="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-amber-500 bg-transparent px-5 py-3 text-sm font-bold text-amber-400 hover:bg-amber-500 hover:text-zinc-900 transition no-print">📄 Generate Proposal PDF →</button>
+<a href="https://ai-recommendable.com/contact.html" target="_blank" class="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-5 py-3 text-sm font-bold text-zinc-900 hover:bg-amber-400 transition no-print">📞 Book Your Free Discovery Call →</a>
 </div></div></div></div></section>
 <footer class="bg-zinc-950 text-zinc-500 py-8 border-t border-zinc-800 no-print"><div class="max-w-6xl mx-auto px-6 text-center"><p class="text-xs text-zinc-500">AI-Recommendable — AI Trust Optimisation™</p><p class="text-xs text-zinc-600 mt-1">Results are indicative and evidence-based. No data stored.</p></div></footer></div>
 <script>

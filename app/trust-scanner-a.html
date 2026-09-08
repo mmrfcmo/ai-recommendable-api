@@ -46,9 +46,12 @@ try{
     if(respData&&respData.score!==undefined)total=respData.score;
   }}catch(e){}
 if(total===0||scores.schema===0){
-  // Fallback to estimated scores
-  scores={schema:34,entity:48,content:55,trust:30,tech:40};total=41;
-  if(respData&&respData.signals){total=Math.round((scores.schema+scores.entity+scores.content+scores.trust+scores.tech)/5)}
+  if(!respData||!respData.signals||respData.score===0){
+    document.getElementById('ls').textContent='❌ Site not found or unreachable. Please check the URL and try again.';
+    await new Promise(function(r){setTimeout(r,3000)});
+    document.getElementById('ld').classList.add('hidden');document.getElementById('sf').classList.remove('hidden');document.getElementById('sb').disabled=false;
+    return;
+  }
 }
 var ring=document.getElementById('sr');setTimeout(function(){ring.style.strokeDashoffset=527.79-(total/100)*527.79},100);
 document.getElementById('rsc').textContent=total;document.getElementById('rsite').textContent=d;

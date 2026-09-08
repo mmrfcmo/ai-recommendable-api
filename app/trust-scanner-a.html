@@ -53,7 +53,7 @@ if(total===0||scores.schema===0){
     return;
   }
 }
-var ring=document.getElementById('sr');ring.style.stroke=(total>=80?'#22c55e':total>=60?'#f59e0b':total>=40?'#f97316':'#ef4444');setTimeout(function(){ring.style.strokeDashoffset=527.79-(total/100)*527.79;ring.style.stroke=(total>=80?'#22c55e':total>=60?'#f59e0b':total>=40?'#f97316':'#ef4444')},100);
+var ring=document.getElementById('sr');ring.style.stroke=(total>=80?'#22c55e':total>=60?'#f59e0b':total>=40?'#f97316':'#ef4444');var bgr=document.getElementById('srBg');if(bgr)bgr.style.stroke=(total>=80?'#22c55e':total>=60?'#f59e0b':total>=40?'#f97316':'#ef4444');var bgr=document.getElementById('srBg');if(bgr){bgr.setAttribute('stroke-opacity','0.25')}setTimeout(function(){ring.style.strokeDashoffset=527.79-(total/100)*527.79},100);
 document.getElementById('rsc').textContent=total;document.getElementById('rsite').textContent=d;
 var g='Critical',gc='bg-red-900/50 text-red-400 border-red-800';
 if(total>=80){g='Leading';gc='bg-emerald-900/50 text-emerald-400 border-emerald-800'}else if(total>=60){g='Strong';gc='bg-lime-900/50 text-lime-400 border-lime-800'}else if(total>=40){g='Developing';gc='bg-orange-900/50 text-orange-400 border-orange-800'}

@@ -87,6 +87,13 @@ from fastapi.responses import HTMLResponse
 import os
 
 @app.get("/trust-scanner-a", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/trust-scanner-b", response_class=HTMLResponse, include_in_schema=False)
+async def serve_scanner_b():
+    p = os.path.join(os.path.dirname(__file__), "trust-scanner-b.html")
+    if os.path.exists(p):
+        with open(p) as f: return f.read()
+    return "<h1>Scanner B not found</h1>"
+
 async def serve_scanner():
     """Serve the Trust Scanner A page (no CORS needed - same domain)."""
     p = os.path.join(os.path.dirname(__file__), "trust-scanner-a.html")

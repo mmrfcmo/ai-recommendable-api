@@ -29,30 +29,32 @@ document.getElementById('sf').addEventListener('submit',async function(e){
 e.preventDefault();var u=document.getElementById('su').value.trim();if(!u)return;var d=u.replace('www.','').split('/')[0];
 document.getElementById('sf').classList.add('hidden');document.getElementById('ld').classList.remove('hidden');document.getElementById('sb').disabled=true;
 document.getElementById('rd').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});document.getElementById('ps').textContent=d;
-var scores={schema:0,entity:0,content:0,trust:0,tech:0},details={schema:'',entity:'',content:'',trust:'',tech:''},total=0,txt='';
+var scores={schema:0,entity:0,content:0,trust:0,tech:0},details={schema:'',entity:'',content:'',trust:'',tech:''},total=0,respData=null;
 try{
-  document.getElementById('ls').textContent='🌐 Contacting page reader...';await new Promise(function(r){setTimeout(r,2000)});
-  var resp=await window.fetch("/api/v1/discoverability/report",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({business_name:d,website:"https://"+d,email:"scanner@internal.com"})}).catch(function(){return null});
-  if(!resp){document.getElementById('ls').textContent='📡 Calling API. Trying other methods...';await new Promise(function(r){setTimeout(r,2000)});throw 'no response';}
-  if(!resp.ok){document.getElementById('ls').textContent='⚠️ API error. Using estimates...';await new Promise(function(r){setTimeout(r,2000)});throw 'bad response';}
-  txt=await resp.text();document.getElementById('ls').textContent='✅ Results received! Analysing...';await new Promise(function(r){setTimeout(r,1500)});
-  var l=txt.toLowerCase(),wc=txt.split(/\s+/).length||0;
-  document.getElementById('ls').textContent='📋 Checking Schema.org...';await new Promise(function(r){setTimeout(r,1500)});
-  var s1=l.indexOf('ld+json')>-1?30:5;s1+=l.indexOf('localbusiness')>-1?25:0;s1+=l.indexOf('organization')>-1||l.indexOf('organisation')>-1?15:0;s1+=l.indexOf('aggregaterating')>-1?15:0;s1+=l.indexOf('openinghours')>-1?10:0;s1+=l.indexOf('service')>-1?5:0;scores.schema=Math.min(100,s1);details.schema=scores.schema>=70?'Good schema markup':scores.schema>=40?'Some schema found':'Limited schema';
-  document.getElementById('ls').textContent='🏷️ Checking Entity & NAP...';await new Promise(function(r){setTimeout(r,1500)});
-  var ph=l.match(/0[0-9\s\-()]{7,15}/)!==null,em=l.indexOf('@')>-1&&(l.indexOf('mailto')>-1||l.indexOf('email')>-1),ad=l.indexOf('street')>-1||l.indexOf('road')>-1||l.indexOf('address')>-1;
-  var e1=20;e1+=ph?25:0;e1+=em?20:0;e1+=ad?20:0;e1+=l.indexOf('localbusiness')>-1?15:0;scores.entity=Math.min(100,e1);details.entity=scores.entity>=70?'Strong NAP consistency':scores.entity>=40?'Some identity signals':'Weak business identity';
-  document.getElementById('ls').textContent='✏️ Evaluating Content Depth...';await new Promise(function(r){setTimeout(r,1500)});
-  var c1=20;c1+=wc>300?10:0;c1+=wc>1000?15:0;c1+=wc>3000?15:0;c1+=l.indexOf('faq')>-1?10:0;c1+=l.indexOf('service')>-1||l.indexOf('treatment')>-1?10:0;c1+=l.indexOf('£')>-1||l.indexOf('price')>-1?10:0;c1+=l.indexOf('blog')>-1?10:0;scores.content=Math.min(100,c1);details.content=scores.content>=70?'Comprehensive content':scores.content>=40?'Adequate content':'Limited content';
-  document.getElementById('ls').textContent='🛡️ Scanning Trust Signals...';await new Promise(function(r){setTimeout(r,1500)});
-  var t1=15;t1+=l.indexOf('review')>-1||l.indexOf('testimonial')>-1?20:0;t1+=l.indexOf('facebook')>-1||l.indexOf('instagram')>-1?15:0;t1+=l.indexOf('trustpilot')>-1||l.indexOf('google')>-1?15:0;t1+=l.indexOf('award')>-1||l.indexOf('certified')>-1?15:0;t1+=l.indexOf('before')>-1||l.indexOf('gallery')>-1?10:0;t1+=l.indexOf('aggregaterating')>-1?10:0;scores.trust=Math.min(100,t1);details.trust=scores.trust>=70?'Good trust signals':scores.trust>=40?'Some trust signals':'Few signals';
-  document.getElementById('ls').textContent='⚙️ Checking Technical SEO...';await new Promise(function(r){setTimeout(r,1500)});
-  var t21=10;t21+=l.indexOf('title')>-1?15:0;t21+=l.indexOf('description')>-1?15:0;t21+=l.indexOf('## ')>-1||l.indexOf('og:')>-1?15:0;t21+=u.indexOf('https://')===0?10:0;t21+=l.indexOf('canonical')>-1?10:0;t21+=l.indexOf('viewport')>-1?10:0;t21+=l.indexOf('robots')>-1?5:0;scores.tech=Math.min(100,t21);details.tech=scores.tech>=70?'Strong technical SEO':scores.tech>=40?'Basic technical SEO':'Needs improvement';
+  document.getElementById('ls').textContent='🔍 Calling API...';await new Promise(function(r){setTimeout(r,2000)});
+  var res=await fetch('/api/v1/discoverability/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_name:d,website:'https://'+d,email:'scanner@internal.com'})});
+  if(!res.ok){document.getElementById('ls').textContent='⚠️ API error ('+res.status+'). Using estimates...';await new Promise(function(r){setTimeout(r,1500)});throw 'bad';}
+  respData=await res.json();
+  document.getElementById('ls').textContent='✅ Results received! Analysing...';await new Promise(function(r){setTimeout(r,1000)});
+  if(respData&&respData.signals){
+    respData.signals.forEach(function(s){
+      var pct=s.max_score>0?Math.round((s.score/s.max_score)*100):0;
+      if(s.name==='schema_org'){scores.schema=pct;details.schema=s.details||''}
+      else if(s.name==='nap_consistency'){scores.entity=scores.entity?scores.entity:pct;if(s.details&&!details.entity)details.entity=s.details}
+      else if(s.name==='entity_clarity'){scores.entity=Math.max(scores.entity,pct);if(s.details)details.entity=details.entity?details.entity+'; '+s.details:s.details}
+      else if(s.name==='content_depth'){scores.content=pct;details.content=s.details||''}
+      else if(s.name==='trust_signals'){scores.trust=pct;details.trust=s.details||''}
+      else if(s.name==='technical_seo'){scores.tech=pct;details.tech=s.details||''}
+    });
+  }
+  if(respData&&respData.score!==undefined)total=respData.score;
 }catch(e){
-  document.getElementById('ls').textContent='⚠️ Analysis unavailable. Showing estimated scores.';await new Promise(function(r){setTimeout(r,2000)});
-  scores={schema:34,entity:48,content:55,trust:30,tech:40};details={schema:'Estimated',entity:'Estimated',content:'Estimated',trust:'Estimated',tech:'Estimated'};
+  if(!respData){
+    document.getElementById('ls').textContent='⚠️ Could not get API results. Using estimates.';await new Promise(function(r){setTimeout(r,1500)});
+    scores={schema:34,entity:48,content:55,trust:30,tech:40};details={schema:'Estimated',entity:'Estimated',content:'Estimated',trust:'Estimated',tech:'Estimated'};
+  }
 }
-total=Math.round((scores.schema+scores.entity+scores.content+scores.trust+scores.tech)/5);
+if(total===0||scores.schema===0){if(!respData){scores={schema:34,entity:48,content:55,trust:30,tech:40};total=41}else{total=Math.round((scores.schema+scores.entity+scores.content+scores.trust+scores.tech)/5)}}
 var ring=document.getElementById('sr');setTimeout(function(){ring.style.strokeDashoffset=527.79-(total/100)*527.79},100);
 document.getElementById('rsc').textContent=total;document.getElementById('rsite').textContent=d;
 var g='Critical',gc='bg-red-900/50 text-red-400 border-red-800';

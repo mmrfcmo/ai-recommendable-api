@@ -86,6 +86,14 @@ async def wordpress_plugin_page():
 from fastapi.responses import HTMLResponse
 import os
 
+@app.get("/scanner-a-proposal", response_class=HTMLResponse, include_in_schema=False)
+async def scanner_a_proposal():
+    p = os.path.join(os.path.dirname(__file__), "scanner-a-proposal.html")
+    if os.path.exists(p):
+        with open(p) as f: return f.read()
+    return "<h1>Not found</h1>"
+
+
 @app.get("/trust-scanner-a", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/trust-scanner-b", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/ai-discoverability-scanner", response_class=HTMLResponse, include_in_schema=False)

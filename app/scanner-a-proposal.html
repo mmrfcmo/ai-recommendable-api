@@ -124,7 +124,8 @@ regTotal+=price;
 itemHtml+='<div class="flex justify-between py-1"><span class="text-zinc-300 text-sm">'+(itemNames[k]||k)+'</span><span class="text-white font-bold text-sm">£'+price+'</span></div>'}});
 document.getElementById('itemisedList').innerHTML=itemHtml;
 var wcCount=0;Object.keys(scores).forEach(function(k){if(scores[k]<80){wcCount++}});
-if(wcCount>=4||regTotal>1000){var saving=regTotal-995;document.getElementById('regularTotal').textContent='£'+regTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995'}
+if(wcCount>=4){var saving=regTotal-995;document.getElementById('regularTotal').textContent='£'+regTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995'}
+else if(wcCount===3&&regTotal>=995){var saving=regTotal-995;document.getElementById('regularTotal').textContent='£'+regTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995'}
 else{document.getElementById('regularTotal').textContent='£'+regTotal;document.getElementById('bundleSaving').textContent='£0 (individual pricing)';document.getElementById('investmentTotal').textContent='£'+regTotal}
 document.getElementById('pricingSummary').classList.remove('hidden');document.getElementById('itemisedList').innerHTML=itemHtml;
 document.getElementById('regularTotal').textContent='£1,300';

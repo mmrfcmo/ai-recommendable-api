@@ -43,7 +43,7 @@ html,body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}body{-webkit-fo
 
 <section class="py-10 sm:py-14 bg-zinc-950"><div class="max-w-6xl mx-auto px-6"><div class="flex flex-col lg:flex-row items-center gap-8">
 <div class="relative w-48 h-48 flex-shrink-0"><svg class="w-48 h-48 -rotate-90" viewBox="0 0 192 192"><circle cx="96" cy="96" r="84" fill="none" stroke="#27272a" stroke-width="10"/><circle id="sr" cx="96" cy="96" r="84" fill="none" stroke="#fbbf24" stroke-width="10" stroke-linecap="round" stroke-dasharray="527.79" stroke-dashoffset="527.79" style="transition:stroke-dashoffset:1.5s ease-out"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span id="rsc" class="text-6xl font-extrabold text-white">0</span><span class="text-sm text-zinc-400">/100</span></div></div>
-<div class="flex-1 text-center lg:text-left"><div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider border" id="gb"><span id="gt">Loading</span></div><h2 class="text-2xl font-bold text-white mt-4">AI Discoverability Trust Score<sup style="font-size:0.5em;vertical-align:super">TM</sup> - <span id="rsite">-</span></h2>
+<div class="flex-1 text-center lg:text-left"><div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider border" id="gb"><span id="gt">Loading</span></div><h2 class="text-2xl font-bold text-white mt-4">AI Discoverability Trust Score<sup style="font-size:0.45em;vertical-align:super;font-weight:300">TM</sup> - <span id="rsite">-</span></h2>
 <div class="flex flex-wrap items-center gap-4 mt-4 text-sm text-zinc-400"><span><span class="text-red-400 font-bold">0</span> Critical</span><span><span class="text-orange-400 font-bold">40</span> Developing</span><span><span class="text-lime-400 font-bold">60</span> Strong</span><span><span class="text-emerald-400 font-bold">80</span> Leading</span></div>
 <div class="flex flex-wrap gap-6 mt-6"><div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-center min-w-[120px]"><p class="text-xs text-zinc-500">Industry Avg</p><p class="text-2xl font-bold text-zinc-400">53</p></div><div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-center min-w-[120px]"><p class="text-xs text-zinc-500">Top</p><p class="text-2xl font-bold text-emerald-400">84</p></div><div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-center min-w-[120px]"><p class="text-xs text-zinc-500">Gap</p><p class="text-2xl font-bold text-amber-400" id="gtl">-</p></div></div></div></div></div></section>
 
@@ -64,19 +64,19 @@ html,body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}body{-webkit-fo
 <p class="text-sm text-zinc-300 mb-4" id="os">Generating offer...</p>
 <p class="text-zinc-300 text-base mb-4">Your Trust Score reveals specific areas where your website can improve its AI discoverability. Based on our analysis of the 5 core trust signals, we've put together a targeted proposal to address the issues identified. Each recommendation below is prioritised by its potential impact on your overall score, helping you focus on what will make the biggest difference first.</p>
 <div class="space-y-2 mb-4 text-left max-w-3xl">
-<div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-400">Signals needing work</span><span class="text-white font-bold" id="owc">-</span></div>
-<div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-400">Recommended package</span><span class="text-white font-bold" id="opn">-</span></div>
-<div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-400">Estimated investment</span><span class="text-amber-400 font-bold text-lg" id="opr">-</span></div>
-<div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-400">Timeline</span><span class="text-white font-bold" id="otl">-</span></div>
+<div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-300 text-sm">Signals needing work</span><span class="text-white font-bold text-sm" id="owc">-</span></div>
+<div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-300 text-sm">Recommended package</span><span class="text-white font-bold text-sm" id="opn">-</span></div>
+<div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-300 text-sm">Estimated investment</span><span class="text-amber-400 font-bold text-sm" id="opr">-</span></div>
+<div class="flex items-center justify-between text-sm py-2 border-b border-zinc-800"><span class="text-zinc-300 text-sm">Timeline</span><span class="text-white font-bold text-sm" id="otl">-</span></div>
 <div class="mt-4 pt-2 border-t border-zinc-700">
-  <p class="text-xs font-bold text-white mb-2">Itemised Breakdown:</p>
+  <p class="text-sm font-bold text-white mb-2">Itemised Breakdown:</p>
   <div id="itemisedList" class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-xs text-zinc-400">
     <p class="text-zinc-500 italic">Run a scan to see itemised pricing...</p>
   </div>
-  <div id="pricingSummary" class="hidden mt-3 space-y-1 text-xs border-t border-zinc-700 pt-2">
-    <div class="flex justify-between"><span class="text-zinc-400">Regular total cost of all items:</span><span class="text-white font-bold" id="regularTotal">-</span></div>
-    <div class="flex justify-between"><span class="text-lime-400">The Total Bundle Saving Amount:</span><span class="text-lime-400 font-bold" id="bundleSaving">-</span></div>
-    <div class="flex justify-between border-t border-zinc-700 pt-1"><span class="text-amber-400 font-bold">The Total Cost of Investment:</span><span class="text-amber-400 font-bold text-sm" id="investmentTotal">-</span></div>
+  <div id="pricingSummary" class="hidden mt-3 space-y-1 text-sm border-t border-zinc-700 pt-2">
+    <div class="flex justify-between"><span class="text-zinc-300 text-sm">Regular total cost of all items:</span><span class="text-white font-bold text-sm" id="regularTotal">-</span></div>
+    <div class="flex justify-between"><span class="text-lime-400 text-sm">The Total Bundle Saving Amount:</span><span class="text-lime-400 font-bold text-sm" id="bundleSaving">-</span></div>
+    <div class="flex justify-between border-t border-zinc-700 pt-1"><span class="text-amber-400 font-bold text-sm">The Total Cost of Investment:</span><span class="text-amber-400 font-bold text-sm" id="investmentTotal">-</span></div>
   </div>
 </div>
 </div>
@@ -117,7 +117,7 @@ var itemHtml='';var regTotal=0;var bundledTotal=0;var firstSignal=true;
 Object.keys(scores).forEach(function(k){if(scores[k]<80){var price=itemPrices[k]||300;regTotal+=price;
 var bundledPrice=firstSignal?400:(firstSignal=false,price);if(firstSignal){bundledPrice=400;firstSignal=false}else{bundledPrice=price}
 bundledTotal+=bundledPrice;
-itemHtml+='<div class="flex justify-between py-1"><span class="text-zinc-400">'+(itemNames[k]||k)+'</span><span class="text-white font-bold">£'+price+'</span></div>'}});
+itemHtml+='<div class="flex justify-between py-1"><span class="text-zinc-300 text-sm">'+(itemNames[k]||k)+'</span><span class="text-white font-bold text-sm">£'+price+'</span></div>'}});
 document.getElementById('itemisedList').innerHTML=itemHtml;
 document.getElementById('regularTotal').textContent='£1,300';
 document.getElementById('bundleSaving').textContent='-£305';

@@ -123,11 +123,11 @@ else if(sc<96){price=Math.round(price*0.85)}
 regTotal+=price;
 itemHtml+='<div class="flex justify-between py-1"><span class="text-zinc-300 text-sm">'+(itemNames[k]||k)+'</span><span class="text-white font-bold text-sm">£'+basePrices[k]+'</span></div>'}});
 document.getElementById('itemisedList').innerHTML=itemHtml;
-var wcCount=0;Object.keys(scores).forEach(function(k){if(scores[k]<80){wcCount++}});
+var wcCount=0;Object.keys(scores).forEach(function(k){if(scores[k]<95){wcCount++}});
 var fullRegTotal=0;Object.keys(scores).forEach(function(k){if(scores[k]<80){fullRegTotal+=basePrices[k]}});
-if(wcCount>=4){var saving=regTotal-995;document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995'}
-else if(wcCount===3&&fullRegTotal>=995){var saving=regTotal-995;document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995'}
-else{document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='£0 (individual pricing)';document.getElementById('investmentTotal').textContent='£'+fullRegTotal}
+if(wcCount>=4){var saving=fullRegTotal-995;document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995'}
+else if(wcCount===3&&fullRegTotal>=995){var saving=fullRegTotal-995;document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995'}
+else if(wcCount>=3){document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='£0 (individual pricing)';document.getElementById('investmentTotal').textContent='£'+fullRegTotal}
 document.getElementById('pricingSummary').classList.remove('hidden');document.getElementById('itemisedList').innerHTML=itemHtml;
 document.getElementById('regularTotal').textContent='£1,300';
 document.getElementById('bundleSaving').textContent='-£305';

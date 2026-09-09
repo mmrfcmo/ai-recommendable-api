@@ -44,6 +44,13 @@ app.include_router(fulfilment_router)
 app.include_router(nap_checker_router)
 
 
+@app.get("/scanner-a-proposal-v2", response_class=HTMLResponse, include_in_schema=False)
+async def scanner_a_proposal_v2():
+    p = os.path.join(os.path.dirname(__file__), "scanner-a-proposal-v2.html")
+    if os.path.exists(p):
+        with open(p) as f: return f.read()
+    return "<h1>Not found</h1>"
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "version": settings.app_version}

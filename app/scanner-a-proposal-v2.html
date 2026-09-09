@@ -25,12 +25,10 @@ html,body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}body{-webkit-fo
 <div class="inline-flex items-center gap-2 bg-amber-500 border border-amber-400 text-zinc-900 text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-6">AI Discoverability Scanner</div>
 <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05] text-white">AI Trust Score <span class="text-amber-400">Scanner</span></h1>
 <p class="mt-4 text-purple-200/80 text-lg max-w-2xl mx-auto">Enter your website URL to get your Full Trust Report.</p>
-
 <form id="sf" class="no-print mt-8"><div class="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
 <div class="flex-1 flex items-center rounded-xl border border-zinc-700 bg-zinc-900 px-4"><input type="text" required id="su" placeholder="example.com" class="flex-1 py-4 pr-4 text-base text-white placeholder-zinc-500 bg-transparent border-none outline-none focus:outline-none"></div>
 <button type="submit" id="sb" class="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-8 py-4 text-base font-bold text-zinc-900 shadow-lg transition hover:bg-amber-400 shrink-0 whitespace-nowrap">Scan Report</button>
 </div><p class="text-xs text-zinc-500 mt-3">e.g. yourwebsite.com</p></form>
-
 <div id="ld" class="hidden text-center py-12"><div class="animate-spin w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full mx-auto mb-4"></div><p class="text-white text-base font-medium" id="ls">Analysing your website...</p></div>
 </div></div></section>
 
@@ -56,7 +54,6 @@ html,body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}body{-webkit-fo
 <p class="text-zinc-400 text-sm mb-4">Ordered by impact - each fix shows estimated score uplift.</p>
 <div id="prr" class="space-y-3"></div>
 <div id="tu" class="hidden mt-4 p-4 rounded-xl border border-amber-400/20 bg-amber-400/5"><p class="text-sm text-amber-300"><span class="font-bold">Estimated uplift:</span> <span id="uv" class="text-xl font-bold text-lime-400">+0</span> points - from <span id="csd" class="font-bold text-amber-400">0</span> to <span id="psd" class="font-bold text-lime-400">0</span></p></div>
-
 </div></section>
 
 <section class="py-10 sm:py-14 bg-zinc-950"><div class="max-w-6xl mx-auto px-6"><div class="max-w-6xl mx-auto"><div class="rounded-2xl border border-amber-400/30 bg-amber-400/5 p-8 text-left">
@@ -104,36 +101,36 @@ var ring=document.getElementById('sr');var clr=total>=80?'#22c55e':total>=60?'#f
 document.getElementById('rsc').textContent=total;document.getElementById('rsite').textContent=d;
 var g='Critical',gc='bg-red-900/50 text-red-400 border-red-800';if(total>=80){g='Leading';gc='bg-emerald-900/50 text-emerald-400 border-emerald-800'}else if(total>=60){g='Strong';gc='bg-lime-900/50 text-lime-400 border-lime-800'}else if(total>=40){g='Developing';gc='bg-orange-900/50 text-orange-400 border-orange-800'}
 document.getElementById('gb').className='inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider border '+gc;document.getElementById('gt').textContent=g;document.getElementById('gtl').textContent=84-total>0?'+'+(84-total)+' pts to 84':'Already Leading';
-var cfg=[{k:'schema',l:'Structured Data',i:'1'},{k:'entity',l:'Entity & NAP',i:'2'},{k:'content',l:'Content Depth',i:'3'},{k:'trust',l:'Trust Signals',i:'4'},{k:'tech',l:'Technical SEO',i:'5'}];var bh='';cfg.forEach(function(c){var v=scores[c.k]||0;var bc=v>=80?'bg-emerald-500':v>=60?'bg-amber-500':v>=40?'bg-orange-500':'bg-red-500';bh+='<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-4"><div class="flex items-center gap-2 mb-2"><span>'+c.i+'</span><span class="text-xs text-zinc-400 uppercase">'+c.l+'</span></div><p class="text-2xl font-bold text-white">'+v+'</p><div class="w-full bg-zinc-800 rounded-full h-2 mt-2"><div class="'+bc+' h-2 rounded-full" style="width:'+v+'%"></div></div></div>'});document.getElementById('sgb').innerHTML=bh;
-var nm={schema:'Structured Data',entity:'Entity & NAP',content:'Content Depth',trust:'Trust Signals',tech:'Technical SEO'};var ch='';Object.keys(nm).forEach(function(k){var v=scores[k]||0;var co=v>=80?'#22c55e':v>=60?'#f59e0b':v>=40?'#f97316':'#ef4444';ch+='<div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-5"><div class="flex items-center gap-3 mb-3"><div class="relative w-12 h-12 flex-shrink-0"><svg class="w-12 h-12 -rotate-90" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="none" stroke="#27272a" stroke-width="3"/><circle cx="24" cy="24" r="18" fill="none" stroke="'+co+'" stroke-width="3" stroke-linecap="round" stroke-dasharray="113.1" stroke-dashoffset="'+(113.1-(v/100)*113.1)+'"/></svg><div class="absolute inset-0 flex items-center justify-center"><span class="text-sm font-bold text-white">'+v+'</span></div></div><div><p class="font-bold text-white text-sm">'+nm[k]+'</p></div></div><div class="text-sm text-zinc-300 mb-2"><span class="text-zinc-500">What we found: </span>'+(details[k]||'Analysed')+'</div><div class="text-sm text-amber-300"><span class="text-zinc-500">> </span>'+(v<50?'Needs improvement.':v<80?'Room for growth.':'Strong signal.')+'</div></div>'});document.getElementById('scd').innerHTML=ch;
-var pr=[{l:'Structured Data',d:details.schema||'',up:12,k:'schema'},{l:'Entity',d:details.entity||'',up:8,k:'entity'},{l:'Trust Signals',d:details.trust||'',up:7,k:'trust'},{l:'Content',d:details.content||'',up:6,k:'content'},{l:'SEO',d:details.tech||'',up:5,k:'tech'}];pr.sort(function(a,b){return(scores[a.k]||50)-(scores[b.k]||50)});var ph='',tu=0,miss=0;pr.forEach(function(p){var cur=scores[p.k]||0;if(cur<100){var up=Math.min(p.up,100-cur);tu+=up;miss++;ph+='<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 flex items-center gap-4"><div class="flex-1"><p class="text-sm font-medium text-white">'+p.l+'</p><p class="text-xs text-zinc-400">'+p.d+'</p></div><div class=text-right><p class="text-lg font-bold text-lime-400">+'+up+'</p></div></div>'}});if(miss>0){document.getElementById('prr').innerHTML=ph;document.getElementById('tu').classList.remove('hidden');document.getElementById('uv').textContent='+'+tu;document.getElementById('csd').textContent=total;document.getElementById('psd').textContent=Math.min(100,total+tu)}
-var wc=0,wp=0,wd=0,sp={schema:300,entity:300,content:300,trust:300,tech:300};var bp={schema:400,entity:300,content:300,trust:300,tech:300};Object.keys(scores).forEach(function(k){if(scores[k]<95){wc++;wp+=sp[k]||300}});wd=wc>=5?28:wc*7;if(wd===0)wd=7;wp=995;
-document.getElementById('owc').textContent=wc+' of 5';
-if(wc===0){document.getElementById('ot').textContent='AI Trust Maintenance';document.getElementById('os').textContent='All signals are strong.';document.getElementById('opn').textContent='AI Trust Maintenance';document.getElementById('opr').textContent='£499 - £799/mo';document.getElementById('otl').textContent='Ongoing';document.getElementById('ot').style.color='#fbbf24'}else if(fullRegTotal>1000||wc>=4){if(wc>=5){document.getElementById('ot').textContent='Complete Optimisation';document.getElementById('os').textContent='All 5 signals need work.';document.getElementById('opn').textContent='Complete Optimisation';document.getElementById('opr').textContent='£1,495';document.getElementById('otl').textContent=wd+' days'}else{document.getElementById('ot').textContent='Growth Package';document.getElementById('os').textContent='Package includes '+(wc>0?wc:'all')+' signal(s).';document.getElementById('opn').textContent='Growth Package';document.getElementById('opr').textContent='£995';document.getElementById('otl').textContent=wd+' days'}document.getElementById('ot').style.color='#fbbf24'}else{document.getElementById('ot').textContent='Basic Package';document.getElementById('os').textContent=wc+' signal(s) need improvement.';document.getElementById('opn').textContent='Basic Package';document.getElementById('opr').textContent='£'+fullRegTotal;document.getElementById('otl').textContent=wd+' days';document.getElementById('ot').style.color='#fbbf24'}
-// Itemised breakdown
-var itemNames={schema:'Schema Implementation',entity:'Entity & NAP Fix',content:'Content Gap Analysis',trust:'Reputation & Trust Build',tech:'Technical SEO Audit'};
-var basePrices={schema:400,entity:300,content:300,trust:300,tech:300};
-var itemHtml='';var regTotal=0;
-Object.keys(scores).forEach(function(k){if(scores[k]<95){var price=basePrices[k]||300;var sc=scores[k]||0;
-if(sc<40){/* 0% discount - full price */}
-else if(sc<61){price=Math.round(price*0.95)}
-else if(sc<80){price=Math.round(price*0.925)}
-else if(sc<90){price=Math.round(price*0.90)}
-else if(sc<96){price=Math.round(price*0.85)}
-regTotal+=price;
-itemHtml+='<div class="flex justify-between py-1"><span class="text-zinc-300 text-sm">'+(itemNames[k]||k)+'</span><span class="text-white font-bold text-sm">£'+basePrices[k]+'</span></div>'}});
-document.getElementById('itemisedList').innerHTML=itemHtml;
-var wcCount=0;Object.keys(scores).forEach(function(k){if(scores[k]<95){wcCount++}});
-var fullRegTotal=0;Object.keys(scores).forEach(function(k){if(scores[k]<95){fullRegTotal+=basePrices[k]}});
-if(wcCount>=4){var saving=fullRegTotal-995;document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995';document.getElementById('pricingSummary').classList.remove('hidden')}
-else if(wcCount===3&&fullRegTotal>=995){var saving=fullRegTotal-995;document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995';document.getElementById('pricingSummary').classList.remove('hidden')}
-else if(wcCount>=3){document.getElementById('regularTotal').textContent='£'+fullRegTotal;document.getElementById('bundleSaving').textContent='£0 (individual pricing)';document.getElementById('investmentTotal').textContent='£'+fullRegTotal;document.getElementById('pricingSummary').classList.remove('hidden')}document.getElementById('itemisedList').innerHTML=itemHtml;
-document.getElementById('regularTotal').textContent='£1,300';
-document.getElementById('bundleSaving').textContent='-£305';
-document.getElementById('investmentTotal').textContent='£995';
-document.getElementById('pricingSummary').classList.remove('hidden');
-window.__scores=scores;window.__details=details;document.getElementById('ld').classList.add('hidden');document.getElementById('rc').classList.remove('hidden');setTimeout(function(){document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'})},200)});
 
+// ===== SIGNAL BARS =====
+var cfg=[{k:'schema',l:'Structured Data',i:'1'},{k:'entity',l:'Entity & NAP',i:'2'},{k:'content',l:'Content Depth',i:'3'},{k:'trust',l:'Trust Signals',i:'4'},{k:'tech',l:'Technical SEO',i:'5'}];var bh='';cfg.forEach(function(c){var v=scores[c.k]||0;var bc=v>=80?'bg-emerald-500':v>=60?'bg-amber-500':v>=40?'bg-orange-500':'bg-red-500';bh+='<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-4"><div class="flex items-center gap-2 mb-2"><span>'+c.i+'</span><span class="text-xs text-zinc-400 uppercase">'+c.l+'</span></div><p class="text-2xl font-bold text-white">'+v+'</p><div class="w-full bg-zinc-800 rounded-full h-2 mt-2"><div class="'+bc+' h-2 rounded-full" style="width:'+v+'%"></div></div></div>'});document.getElementById('sgb').innerHTML=bh;
+
+// ===== DETAILED ANALYSIS =====
+var nm={schema:'Structured Data',entity:'Entity & NAP',content:'Content Depth',trust:'Trust Signals',tech:'Technical SEO'};var ch='';Object.keys(nm).forEach(function(k){var v=scores[k]||0;var co=v>=80?'#22c55e':v>=60?'#f59e0b':v>=40?'#f97316':'#ef4444';ch+='<div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-5"><div class="flex items-center gap-3 mb-3"><div class="relative w-12 h-12 flex-shrink-0"><svg class="w-12 h-12 -rotate-90" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="none" stroke="#27272a" stroke-width="3"/><circle cx="24" cy="24" r="18" fill="none" stroke="'+co+'" stroke-width="3" stroke-linecap="round" stroke-dasharray="113.1" stroke-dashoffset="'+(113.1-(v/100)*113.1)+'"/></svg><div class="absolute inset-0 flex items-center justify-center"><span class="text-sm font-bold text-white">'+v+'</span></div></div><div><p class="font-bold text-white text-sm">'+nm[k]+'</p></div></div><div class="text-sm text-zinc-300 mb-2"><span class="text-zinc-500">What we found: </span>'+(details[k]||'Analysed')+'</div><div class="text-sm text-amber-300"><span class="text-zinc-500">> </span>'+(v<50?'Needs improvement.':v<80?'Room for growth.':'Strong signal.')+'</div></div>'});document.getElementById('scd').innerHTML=ch;
+
+// ===== PRIORITY IMPROVEMENTS =====
+var pr=[{l:'Structured Data',d:details.schema||'',up:12,k:'schema'},{l:'Entity',d:details.entity||'',up:8,k:'entity'},{l:'Trust Signals',d:details.trust||'',up:7,k:'trust'},{l:'Content',d:details.content||'',up:6,k:'content'},{l:'SEO',d:details.tech||'',up:5,k:'tech'}];pr.sort(function(a,b){return(scores[a.k]||50)-(scores[b.k]||50)});var ph='',tu=0,miss=0;pr.forEach(function(p){var cur=scores[p.k]||0;if(cur<100){var up=Math.min(p.up,100-cur);tu+=up;miss++;ph+='<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 flex items-center gap-4"><div class="flex-1"><p class="text-sm font-medium text-white">'+p.l+'</p><p class="text-xs text-zinc-400">'+p.d+'</p></div><div class=text-right><p class="text-lg font-bold text-lime-400">+'+up+'</p></div></div>'}});if(miss>0){document.getElementById('prr').innerHTML=ph;document.getElementById('tu').classList.remove('hidden');document.getElementById('uv').textContent='+'+tu;document.getElementById('csd').textContent=total;document.getElementById('psd').textContent=Math.min(100,total+tu)}
+
+// ===== OFFER LOGIC =====
+var wc=0;var bp={schema:400,entity:300,content:300,trust:300,tech:300};Object.keys(scores).forEach(function(k){if(scores[k]<95){wc++}});var wd=wc>=5?28:wc*7;if(wd===0)wd=7;
+var fullPrice=0;Object.keys(scores).forEach(function(k){if(scores[k]<95){fullPrice+=bp[k]}});
+document.getElementById('owc').textContent=wc+' of 5';
+if(wc===0){document.getElementById('ot').textContent='AI Trust Maintenance';document.getElementById('os').textContent='All signals are strong.';document.getElementById('opn').textContent='AI Trust Maintenance';document.getElementById('opr').textContent='£499 - £799/mo';document.getElementById('otl').textContent='Ongoing';document.getElementById('ot').style.color='#fbbf24'}
+else if(wc>=4||(wc===3&&fullPrice>=995)){document.getElementById('ot').textContent='Growth Package';document.getElementById('os').textContent='Package includes '+wc+' signal(s).';document.getElementById('opn').textContent='Growth Package';document.getElementById('opr').textContent='£995';document.getElementById('otl').textContent=wd+' days';document.getElementById('ot').style.color='#fbbf24'}
+else{document.getElementById('ot').textContent='Basic Package';document.getElementById('os').textContent=wc+' signal(s) need improvement.';document.getElementById('opn').textContent='Basic Package';document.getElementById('opr').textContent='£'+fullPrice;document.getElementById('otl').textContent=wd+' days';document.getElementById('ot').style.color='#fbbf24'}
+
+// ===== ITEMISED BREAKDOWN =====
+var itemNames={schema:'Schema Implementation',entity:'Entity & NAP Fix',content:'Content Gap Analysis',trust:'Reputation & Trust Build',tech:'Technical SEO Audit'};
+var itemHtml='';Object.keys(scores).forEach(function(k){if(scores[k]<95){itemHtml+='<div class="flex justify-between py-1"><span class="text-zinc-300 text-sm">'+(itemNames[k]||k)+'</span><span class="text-white font-bold text-sm">£'+bp[k]+'</span></div>'}});
+document.getElementById('itemisedList').innerHTML=itemHtml;
+
+// ===== PRICING SUMMARY =====
+if(wc>=4||(wc===3&&fullPrice>=995)){var saving=fullPrice-995;document.getElementById('regularTotal').textContent='£'+fullPrice;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995';document.getElementById('pricingSummary').classList.remove('hidden')}
+else if(wc>=3){document.getElementById('regularTotal').textContent='£'+fullPrice;document.getElementById('bundleSaving').textContent='£0 (individual pricing)';document.getElementById('investmentTotal').textContent='£'+fullPrice;document.getElementById('pricingSummary').classList.remove('hidden')}
+
+document.getElementById('ld').classList.add('hidden');document.getElementById('rc').classList.remove('hidden');setTimeout(function(){document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'})},200)});
+
+// ===== GENERATE PROPOSAL =====
 function generateProposal(){
 document.getElementById('proposalSection').classList.remove('hidden');
 var total=document.getElementById('rsc').textContent;
@@ -147,18 +144,17 @@ var bc=[{k:'authority',l:'Authority Building',p:350},{k:'social',l:'Social Proof
 var ph='<div class="max-w-6xl mx-auto px-4"><div id="proposalOutput" class="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-left">';
 ph+='<div class="text-center mb-6"><div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-900 to-purple-700 text-white flex items-center justify-center text-2xl font-extrabold mx-auto shadow-lg shadow-purple-900/50 ring-2 ring-amber-400/50">AI-R</div><h2 class="text-2xl font-bold text-white mt-4">Scan Proposal</h2><p class="text-zinc-400 text-sm mt-1">Prepared for <strong class="text-white">'+domain+'</strong></p><p class="text-zinc-500 text-xs mt-1">'+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</p></div>';
 ph+='<div class="grid sm:grid-cols-2 gap-4 mb-6"><div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-center"><p class="text-xs text-zinc-500 uppercase">Current Score</p><p class="text-3xl font-extrabold text-amber-400 mt-1">'+total+'<span class="text-sm text-zinc-500">/100</span></p><p class="text-xs text-zinc-400 mt-1">'+grade+'</p></div><div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-center"><p class="text-xs text-zinc-500 uppercase">Industry Average</p><p class="text-3xl font-extrabold text-zinc-400 mt-1">53<span class="text-sm text-zinc-500">/100</span></p></div></div>';
-ph+='<div class="mb-6"><h3 class="text-sm font-bold text-amber-400 mb-3">Recommended Priority Improvements</h3><p class="text-xs text-zinc-400 mb-3">Based on your scan, the following signals need attention:</p>';
-ph+='<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
+ph+='<div class="mb-6"><h3 class="text-sm font-bold text-amber-400 mb-3">Recommended Priority Improvements</h3><p class="text-xs text-zinc-400 mb-3">Based on your scan, the following signals need attention:</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
 pr.forEach(function(p){var cur=sc[p.k]||0;if(cur<100){var col=cur>=80?'#22c55e':cur>=60?'#f59e0b':cur>=40?'#f97316':'#ef4444';ph+='<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-3"><div class="flex items-center justify-between"><p class="text-sm font-bold text-white">'+p.l+'</p><span class="text-sm font-bold" style="color:'+col+'">'+cur+'/100</span></div><p class="text-xs text-zinc-400 mt-1">'+((dt[p.k]||'Needs improvement'))+'</p></div>'}});
 ph+='</div></div>';
-ph+='<div class="mb-6"><h3 class="text-sm font-bold text-amber-400 mb-3">Additional Trust Signals</h3><p class="text-xs text-zinc-400 mb-3">Select additional services to further boost your score:</p>';
-ph+='<div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="boostChecklist">';
-bc.forEach(function(b){ph+='<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-3 flex items-center justify-between"><div class="flex items-center gap-3"><input type="checkbox" id="boost_'+b.k+'" class="w-4 h-4 rounded text-amber-500" onchange="updateBT()"><div><p class="text-sm font-bold text-white">'+b.l+'</p></div></div><div class="text-right"><p class="text-sm font-bold text-amber-400">&pound;'+b.p+'</p></div></div>'});
-ph+='</div></div><div class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 mb-4"><div class="flex justify-between"><span class="text-zinc-400">Total Additional Investment</span><span class="text-white font-bold" id="bt">&pound;0</span></div></div>';
-ph+='<div class="text-center"><button onclick="window.print()" class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-900 hover:bg-amber-400 transition">Print / Save as PDF</button></div>';
-ph+='</div></div>';
+ph+='<div class="mb-6"><h3 class="text-sm font-bold text-amber-400 mb-3">Additional Trust Signals</h3><p class="text-xs text-zinc-400 mb-3">Select additional services to further boost your score:</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="boostChecklist">';
+bc.forEach(function(b){ph+='<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-3 flex items-center justify-between"><div class="flex items-center gap-3"><input type="checkbox" id="boost_'+b.k+'" class="w-4 h-4 rounded text-amber-500" onchange="updateBT()"><div><p class="text-sm font-bold text-white">'+b.l+'</p></div></div><div class="text-right"><p class="text-sm font-bold text-amber-400">£'+b.p+'</p></div></div>'});
+ph+='</div></div><div class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 mb-4"><div class="flex justify-between"><span class="text-zinc-400">Total Additional Investment</span><span class="text-white font-bold" id="bt">£0</span></div></div>';
+ph+='<div class="text-center"><button onclick="window.print()" class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-900 hover:bg-amber-400 transition">Print / Save as PDF</button></div></div></div>';
 var existing=document.getElementById('proposalOutput');if(existing)existing.remove();
 document.getElementById('proposalSection').insertAdjacentHTML('afterend',ph);
 window.__bc=bc;
-var out=document.getElementById('proposalOutput');if(out)out.scrollIntoView({behavior:'smooth',block:'start'});}function updateBT(){var cfg=window.__bc||[];var t=0;cfg.forEach(function(b){var cb=document.getElementById('boost_'+b.k);if(cb&&cb.checked)t+=b.p;});var el=document.getElementById('bt');if(el)el.textContent=''+t;}
+var out=document.getElementById('proposalOutput');if(out)out.scrollIntoView({behavior:'smooth',block:'start'});}
+
+function updateBT(){var cfg=window.__bc||[];var t=0;cfg.forEach(function(b){var cb=document.getElementById('boost_'+b.k);if(cb&&cb.checked)t+=b.p;});var el=document.getElementById('bt');if(el)el.textContent='£'+t;}
 </script></body></html>

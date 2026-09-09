@@ -112,13 +112,21 @@ document.getElementById('owc').textContent=wc+' of 5';
 if(wc===0){document.getElementById('ot').textContent='AI Trust Maintenance';document.getElementById('os').textContent='All signals are strong.';document.getElementById('opn').textContent='AI Trust Maintenance';document.getElementById('opr').textContent='£499 - £799/mo';document.getElementById('otl').textContent='Ongoing'}else if(wc<=3){document.getElementById('ot').textContent='Growth Package';document.getElementById('os').textContent=wc+' signal(s) need improvement.';document.getElementById('opn').textContent='Growth Package';document.getElementById('opr').textContent='£995';document.getElementById('otl').textContent=wd+' days'}else if(wc===4){document.getElementById('ot').textContent='Growth Package (Discounted)';document.getElementById('os').textContent='4 signals need work.';document.getElementById('opn').textContent='Growth Package (Discounted)';document.getElementById('opr').textContent='£995';document.getElementById('otl').textContent=wd+' days'}else{document.getElementById('ot').textContent='Complete Optimisation';document.getElementById('os').textContent='All signals need work.';document.getElementById('opn').textContent='Complete Optimisation';document.getElementById('opr').textContent='£1,495';document.getElementById('otl').textContent=wd+' days'}
 // Itemised breakdown
 var itemNames={schema:'Schema Implementation',entity:'Entity & NAP Fix',content:'Content Gap Analysis',trust:'Reputation & Trust Build',tech:'Technical SEO Audit'};
-var itemPrices={schema:400,entity:300,content:300,trust:300,tech:300};
-var itemHtml='';var regTotal=0;var bundledTotal=0;var firstSignal=true;
-Object.keys(scores).forEach(function(k){if(scores[k]<80){var price=itemPrices[k]||300;regTotal+=price;
-var bundledPrice=firstSignal?400:(firstSignal=false,price);if(firstSignal){bundledPrice=400;firstSignal=false}else{bundledPrice=price}
-bundledTotal+=bundledPrice;
+var basePrices={schema:400,entity:300,content:300,trust:300,tech:300};
+var itemHtml='';var regTotal=0;
+Object.keys(scores).forEach(function(k){if(scores[k]<80){var price=basePrices[k]||300;var sc=scores[k]||0;
+if(sc<41){/* full price */}
+else if(sc<61){price=Math.round(price*0.95)}
+else if(sc<81){price=Math.round(price*0.90)}
+else if(sc<91){price=Math.round(price*0.80)}
+regTotal+=price;
 itemHtml+='<div class="flex justify-between py-1"><span class="text-zinc-300 text-sm">'+(itemNames[k]||k)+'</span><span class="text-white font-bold text-sm">£'+price+'</span></div>'}});
 document.getElementById('itemisedList').innerHTML=itemHtml;
+var bundlePrice=995;var saving=regTotal-bundlePrice;
+document.getElementById('regularTotal').textContent='£'+regTotal;
+document.getElementById('bundleSaving').textContent='-£'+saving;
+document.getElementById('investmentTotal').textContent='£'+bundlePrice;
+document.getElementById('pricingSummary').classList.remove('hidden');document.getElementById('itemisedList').innerHTML=itemHtml;
 document.getElementById('regularTotal').textContent='£1,300';
 document.getElementById('bundleSaving').textContent='-£305';
 document.getElementById('investmentTotal').textContent='£995';

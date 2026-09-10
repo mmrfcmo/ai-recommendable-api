@@ -128,7 +128,7 @@ document.getElementById('itemisedList').innerHTML=itemHtml;
 if(wc>=4||(wc===3&&fullPrice>=995)){var saving=fullPrice-995;document.getElementById('regularTotal').textContent='£'+fullPrice;document.getElementById('bundleSaving').textContent='-£'+saving;document.getElementById('investmentTotal').textContent='£995';document.getElementById('pricingSummary').classList.remove('hidden')}
 else if(wc>=3){document.getElementById('regularTotal').textContent='£'+fullPrice;document.getElementById('bundleSaving').textContent='£0 (individual pricing)';document.getElementById('investmentTotal').textContent='£'+fullPrice;document.getElementById('pricingSummary').classList.remove('hidden')}
 
-document.getElementById('ld').classList.add('hidden');document.getElementById('rc').classList.remove('hidden');setTimeout(function(){document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'})},200)});
+window.__scores=scores;window.__details=details;document.getElementById('ld').classList.add('hidden');document.getElementById('rc').classList.remove('hidden');setTimeout(function(){document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'})},200)});
 
 // ===== GENERATE PROPOSAL =====
 function generateProposal(){

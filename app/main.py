@@ -10,18 +10,16 @@ from app.api.v1.readiness import router as readiness_router
 from app.api.v1.bookings import router as bookings_router
 from app.api.v1.fulfilment_routes import router as fulfilment_router
 from app.api.v1.nap_checker import router as nap_checker_router
+from app.api.v1.growth_gap_v1 import router as growth_gap_router
 import app.models  # noqa — ensure models are loaded
 import app.models.workflow_db  # noqa
 import os
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
-
 
 app = FastAPI(
     title=settings.app_name,
@@ -42,90 +40,47 @@ app.include_router(readiness_router)
 app.include_router(bookings_router)
 app.include_router(fulfilment_router)
 app.include_router(nap_checker_router)
+app.include_router(growth_gap_router)
 
+@app.get("/")
+async def root():
+    return {"app": settings.app_name, "version": settings.app_version}
 
-@app.get("/scanner-a-proposal-v2", response_class=HTMLResponse, include_in_schema=False)
-async def scanner_a_proposal_v2():
-    p = os.path.join(os.path.dirname(__file__), "scanner-a-proposal-v2.html")
+@app.get("/channels", include_in_schema=False)
+async def get_channels():
+    import json
+    p = os.path.join(os.path.dirname(__file__), "channels.json")
     if os.path.exists(p):
-        with open(p) as f: return f.read()
-    return "<h1>Not found</h1>"
+        with open(p) as f:
+            channels = json.load(f)
+        html = "<html><head><meta charset='utf-8'><title>Channels</title></head><body>"
+        html += "<h1>Channels</h1><ul>"
+        for c in channels:
+            html += f"<li>{c.get('name', 'Unnamed')} — {c.get('whatsapp', 'N/A')}</li>"
+        html += "</ul></body></html>"
+        return HTMLResponse(html)
+    return HTMLResponse("<h1>No channels found</h1>")
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "version": settings.app_version}
-
-
-@app.get("/sitemap.xml", response_class=Response, include_in_schema=False)
-async def sitemap():
-    """Serve sitemap.xml."""
-    sitemap_path = os.path.join(os.path.dirname(__file__), "..", "sitemap.xml")
-    sitemap_path = os.path.abspath(sitemap_path)
-    if os.path.exists(sitemap_path):
-        with open(sitemap_path, "r") as f:
-            return Response(content=f.read(), media_type="application/xml")
-    return Response(content="<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'></urlset>", media_type="application/xml")
-
-
-@app.get("/wordpress-plugin/download", include_in_schema=False)
-async def download_wordpress_plugin():
-    """Download the AI-Recommendable Connector WordPress plugin."""
-    plugin_path = os.path.join(os.path.dirname(__file__), "..", "wordpress-plugin", "ai-recommendable-connector.php")
-    plugin_path = os.path.abspath(plugin_path)
-    if os.path.exists(plugin_path):
-        return FileResponse(
-            plugin_path,
-            media_type="application/octet-stream",
-            filename="ai-recommendable-connector.php",
-        )
-    return {"error": "Plugin file not found on server", "download_url": "https://raw.githubusercontent.com/mmrfcmo/ai-recommendable-api/main/wordpress-plugin/ai-recommendable-connector.php"}
-
-
-@app.get("/wordpress-plugin", response_class=HTMLResponse, include_in_schema=False)
-async def wordpress_plugin_page():
-    """Plugin information and download page."""
-    plugin_page = os.path.join(os.path.dirname(__file__), "..", "wordpress-plugin", "wordpress-plugin.html")
-    plugin_page = os.path.abspath(plugin_page)
-    if os.path.exists(plugin_page):
-        with open(plugin_page, "r") as f:
+@app.get("/app-report", include_in_schema=False)
+async def serve_report():
+    p = os.path.join(os.path.dirname(__file__), "app-report.html")
+    if os.path.exists(p):
+        with open(p) as f:
             return f.read()
-    return "<h1>WordPress Plugin</h1><p>Download: <a href='/wordpress-plugin/download'>ai-recommendable-connector.php</a></p>"
-from fastapi.responses import HTMLResponse
-import os
+    return "<h1>app-report.html not found</h1>"
 
-
-
-
-@app.get("/trust-scanner-a", response_class=HTMLResponse, include_in_schema=False)
-@app.get("/trust-scanner-b", response_class=HTMLResponse, include_in_schema=False)
-@app.get("/ai-discoverability-scanner", response_class=HTMLResponse, include_in_schema=False)
-async def ai_discoverability_scanner():
-    p = os.path.join(os.path.dirname(__file__), "trust-scanner-b.html")
-    if os.path.exists(p):
-        with open(p) as f: return f.read()
-    return "<h1>Scanner not found</h1>"
-
+@app.get("/scanner-static", include_in_schema=False)
 async def serve_scanner_b():
     p = os.path.join(os.path.dirname(__file__), "trust-scanner-b.html")
     if os.path.exists(p):
-        with open(p) as f: return f.read()
+        with open(p) as f:
+            return f.read()
     return "<h1>Scanner B not found</h1>"
 
+@app.get("/trust-scanner-a", response_class=HTMLResponse, include_in_schema=False)
 async def serve_scanner():
-    """Serve the Trust Scanner A page (no CORS needed - same domain)."""
     p = os.path.join(os.path.dirname(__file__), "trust-scanner-a.html")
     if os.path.exists(p):
         with open(p) as f:
             return f.read()
-    return "<h1>Scanner not found - upload to app/ folder</h1>"
-
-
-from fastapi.responses import HTMLResponse
-import os
-
-@app.get("/trust-scanner-a", response_class=HTMLResponse, include_in_schema=False)
-async def serve_scanner():
-    p = os.path.join(os.path.dirname(__file__), "trust-scanner-a.html")
-    if os.path.exists(p):
-        with open(p) as f: return f.read()
     return "<h1>Scanner not found</h1>"

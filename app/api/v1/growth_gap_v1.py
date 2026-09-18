@@ -225,3 +225,4 @@ async def create_growth_gap_diagnosis(req: GrowthGapRequest):
         return GrowthGapResponse(success=True, diagnosis=diagnosis)
     except Exception as e:
         logger.error(f"Growth Gap Diagnosis failed: {e}", exc_info=True)
+        return GrowthGapResponse(success=False, error=str(e)[:500])

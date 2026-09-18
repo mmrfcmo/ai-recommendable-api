@@ -1,4 +1,4 @@
-Growth Gap Analyst — V1
+"""Growth Gap Analyst — V1
 The Doctor Approach™
 Takes AI-Recommendable scanner output and produces a structured diagnosis.
 No AI. No dashboards. No PDFs. Just evidence → diagnosis.

@@ -46,6 +46,10 @@ app.include_router(growth_gap_router)
 async def root():
     return {"app": settings.app_name, "version": settings.app_version}
 
+@app.get("/health", include_in_schema=False)
+async def health():
+    return {"status": "ok", "version": settings.app_version}
+
 @app.get("/channels", include_in_schema=False)
 async def get_channels():
     import json
@@ -77,6 +81,14 @@ async def serve_scanner_b():
             return f.read()
     return "<h1>Scanner B not found</h1>"
 
+@app.get("/trust-scanner-b", response_class=HTMLResponse, include_in_schema=False)
+async def serve_scanner_b_public():
+    p = os.path.join(os.path.dirname(__file__), "trust-scanner-b.html")
+    if os.path.exists(p):
+        with open(p) as f:
+            return f.read()
+    return "<h1>Scanner B not found</h1>"
+
 @app.get("/trust-scanner-a", response_class=HTMLResponse, include_in_schema=False)
 async def serve_scanner():
     p = os.path.join(os.path.dirname(__file__), "trust-scanner-a.html")
@@ -84,3 +96,4 @@ async def serve_scanner():
         with open(p) as f:
             return f.read()
     return "<h1>Scanner not found</h1>"
+

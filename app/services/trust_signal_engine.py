@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
 
-logger=logging.getLogger("ai_recommendable.trust_signal_engine")
+logger=logging.getLogger("rbai.trust_signal_engine")
 
 SIGNALS=[
  ("entity_clarity","Entity Clarity"),
@@ -41,10 +41,10 @@ def _jsonld(soup):
 def _score(items, max_points):
     return min(max_points, sum(points for ok,points in items if ok))
 
-def _signal(key,label,score,max_score,evidence,limitations=None):
+def _signal(key,label,score,max_score,evidence,limitations=None,gaps=None):
     return {"name":key,"label":label,"score":round(score),"max_score":max_score,
             "percentage":round(score/max_score*100) if max_score else 0,
-            "evidence":evidence[:8],"limitations":limitations or []}
+            "evidence":evidence[:8],"gaps":(gaps or [])[:8],"limitations":limitations or []}
 
 async def assess(url, business_name=None, mode="basic"):
     url=_url(url.strip()); parsed=urlparse(url)
@@ -53,7 +53,7 @@ async def assess(url, business_name=None, mode="basic"):
     max_pages=1 if mode=="basic" else 8
     timeout=12 if mode=="basic" else 10
     evidence=[]; page_data=[]
-    headers={"User-Agent":"RecommendableByAI-TrustAssessment/1.0"}
+    headers={"User-Agent":"RbAI-TrustSignalsScanner/1.0"}
     async with httpx.AsyncClient(timeout=timeout,follow_redirects=True,headers=headers) as client:
         try:
             first=await client.get(url)
@@ -107,6 +107,7 @@ async def assess(url, business_name=None, mode="basic"):
     ent_e += [("Organisation or LocalBusiness structured identity is present", bool(re.search(r"organization|localbusiness|professionalservice|corporation",schema_text)),)]
     ent_e += [("Contact/location information is discoverable", bool(re.search(r"contact us|telephone|phone|address|postcode|postal code|located in|based in",all_text)),)]
     ent_score=_score([(ok,20) for _,ok in ent_e],100)
+    ent_gaps=[x for x,ok in ent_e if not ok]
 
     # Knowledge Completeness
     kn_e=[
@@ -118,6 +119,7 @@ async def assess(url, business_name=None, mode="basic"):
       ("Supporting content/resources are discoverable",bool(re.search(r"blog|news|insights|guides|resources|articles",all_text))),
     ]
     kn_score=_score([(ok,round(100/6)) for _,ok in kn_e],100)
+    kn_gaps=[x for x,ok in kn_e if not ok]
 
     # Trust Evidence
     tr_e=[
@@ -128,6 +130,7 @@ async def assess(url, business_name=None, mode="basic"):
       ("Contact and business details support accountability",bool(re.search(r"contact|telephone|email|address|registered",all_text))),
     ]
     tr_score=_score([(ok,20) for _,ok in tr_e],100)
+    tr_gaps=[x for x,ok in tr_e if not ok]
 
     # Technical Accessibility
     links=[a.get("href","") for a in soup.find_all("a",href=True)]
@@ -141,6 +144,7 @@ async def assess(url, business_name=None, mode="basic"):
       ("Heading structure begins with a clear H1",bool(first["h1"])),
     ]
     ta_score=_score([(ok,15) for _,ok in ta_e],100)
+    ta_gaps=[x for x,ok in ta_e if not ok]
 
     # Narrative Consistency: compare titles/H1 and repeated identity/service language across pages.
     titles=[p["title"] for p in page_data if p["title"]]; h1s=[x for p in page_data for x in p["h1"]]
@@ -152,6 +156,7 @@ async def assess(url, business_name=None, mode="basic"):
       ("No obvious conflicting identity terms found",not bool(re.search(r"welcome to|we are [^.]{0,80}\b(?:different|formerly|previously)\b",all_text))),
     ]
     nc_score=_score([(ok,20) for _,ok in nc_e],100)
+    nc_gaps=[x for x,ok in nc_e if not ok]
 
     # External Validation is deliberately evidence-aware, not fabricated.
     ev_limit=["This automated assessment does not claim to verify third-party directories, reviews, citations or external authority in full."]
@@ -161,17 +166,18 @@ async def assess(url, business_name=None, mode="basic"):
       ("Structured sameAs/external identity links are present",any("sameas" in json.dumps(p["jsonld"]).lower() for p in page_data)),
     ]
     ev_score=_score([(ok,34) for _,ok in ev_e],100)
+    ev_gaps=[x for x,ok in ev_e if not ok]
     signals=[
-      _signal("entity_clarity","Entity Clarity",ent_score,100,[x for x,ok in ent_e if ok] or ["Limited clear entity evidence found."]),
-      _signal("knowledge_completeness","Knowledge Completeness",kn_score,100,[x for x,ok in kn_e if ok] or ["Important business knowledge was not clearly found."]),
-      _signal("trust_evidence","Trust Evidence",tr_score,100,[x for x,ok in tr_e if ok] or ["Limited direct trust evidence found."]),
-      _signal("technical_accessibility","Technical Accessibility",ta_score,100,[x for x,ok in ta_e if ok] or ["Technical accessibility evidence is limited."]),
-      _signal("narrative_consistency","Narrative Consistency",nc_score,100,[x for x,ok in nc_e if ok] or ["Narrative consistency needs deeper review."]),
-      _signal("external_validation","External Validation",ev_score,100,[x for x,ok in ev_e if ok] or ["No strong external validation evidence was visible on the assessed pages."],ev_limit),
+      _signal("entity_clarity","Entity Clarity",ent_score,100,[x for x,ok in ent_e if ok] or ["Limited clear entity evidence found."],gaps=ent_gaps),
+      _signal("knowledge_completeness","Knowledge Completeness",kn_score,100,[x for x,ok in kn_e if ok] or ["Important business knowledge was not clearly found."],gaps=kn_gaps),
+      _signal("trust_evidence","Trust Evidence",tr_score,100,[x for x,ok in tr_e if ok] or ["Limited direct trust evidence found."],gaps=tr_gaps),
+      _signal("technical_accessibility","Technical Accessibility",ta_score,100,[x for x,ok in ta_e if ok] or ["Technical accessibility evidence is limited."],gaps=ta_gaps),
+      _signal("narrative_consistency","Narrative Consistency",nc_score,100,[x for x,ok in nc_e if ok] or ["Narrative consistency needs deeper review."],gaps=nc_gaps),
+      _signal("external_validation","External Validation",ev_score,100,[x for x,ok in ev_e if ok] or ["No strong external validation evidence was visible on the assessed pages."],ev_limit,ev_gaps),
     ]
     score=round(sum(x["score"] for x in signals)/len(signals))
     strongest=max(signals,key=lambda x:x["score"]); weakest=min(signals,key=lambda x:x["score"])
-    priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":x["evidence"][0]} for x in signals],key=lambda x:x["score"])[:4]
+    priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended.")} for x in signals],key=lambda x:x["score"])[:4]
     return {"success":True,"mode":mode,"url":url,"business_name":name,"pages_assessed":len(page_data),
             "pages_discovered":len(pages),"overall_score":score,"grade":"Leading" if score>=80 else "Strong" if score>=60 else "Developing" if score>=40 else "Needs Attention",
             "strongest_signal":strongest["label"],"weakest_signal":weakest["label"],"signals":signals,"priority_improvements":priorities,

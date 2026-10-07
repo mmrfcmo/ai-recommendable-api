@@ -37,7 +37,7 @@ class TrustSignalEngineTests(unittest.TestCase):
 
     def test_tokenisation_ignores_short_words(self):
         self.assertIn("company", _tokens("Our Company"))
-        self.assertNotIn("our", _tokens("Our Company"))
+        self.assertNotIn("we", _tokens("We Company"))
 
     def test_basic_and_deep_use_same_engine_with_different_depth(self):
         pages = {

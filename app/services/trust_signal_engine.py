@@ -75,20 +75,45 @@ async def assess(url, business_name=None, mode="basic"):
                     "desc":desc,"internal":list(dict.fromkeys(internal)),"jsonld":_jsonld(soup)}
         first_data=parse(str(first.url),first.text); page_data.append(first_data)
         if mode=="deep":
-            for link in first_data["internal"]:
-                if len(pages)>=max_pages: break
-                clean=link.split("#")[0]
-                if clean not in pages and urlparse(clean).path not in ("/wp-admin/","/wp-login.php"):
-                    pages.append(clean)
-            for p in pages[1:]:
+            # Bounded breadth-first crawl: expand internal links from each assessed page
+            # until the shared deep-mode page budget is reached.
+            queue=list(first_data["internal"])
+            seen=set(pages)
+            while queue and len(pages)<max_pages:
+                clean=queue.pop(0).split("#")[0]
+                if clean in seen or urlparse(clean).path in ("/wp-admin/","/wp-login.php"):
+                    continue
+                seen.add(clean)
                 try:
-                    r=await client.get(p); 
-                    if r.status_code<400: page_data.append(parse(str(r.url),r.text))
-                except Exception as exc: logger.info("deep page skipped %s: %s",p,exc)
+                    r=await client.get(clean)
+                    if r.status_code>=400:
+                        continue
+                    resolved=str(r.url).split("#")[0]
+                    if resolved in pages:
+                        continue
+                    data=parse(resolved,r.text)
+                    pages.append(resolved)
+                    page_data.append(data)
+                    for child in data["internal"]:
+                        child=child.split("#")[0]
+                        if child not in seen and len(pages)+len(queue)<max_pages*2:
+                            queue.append(child)
+                except Exception as exc:
+                    logger.info("deep page skipped %s: %s",clean,exc)
 
     texts=[p["text"] for p in page_data]; all_text=" ".join(texts).lower()
     first=page_data[0]; soup=first["soup"]; html=first["html"]
-    name=business_name or ""
+    name=business_name.strip() if business_name else ""
+    if not name:
+        # Prefer explicit Organization/LocalBusiness names from structured data.
+        for j in first["jsonld"]:
+            jtype=j.get("@type")
+            types=jtype if isinstance(jtype,list) else [jtype]
+            if any(str(t).lower() in {"organization","localbusiness","professionalservice","corporation"} for t in types):
+                candidate=_clean(str(j.get("name","")))
+                if candidate:
+                    name=candidate
+                    break
     if not name:
         name=(first["title"].split("|")[0].split("-")[0].strip() or parsed.netloc.split(".")[0]).strip()
     name_tokens=_tokens(name)
@@ -118,7 +143,7 @@ async def assess(url, business_name=None, mode="basic"):
       ("Relevant locations/audience served are described",bool(re.search(r"serving|serve|based in|areas we cover|locations|local",all_text))),
       ("Supporting content/resources are discoverable",bool(re.search(r"blog|news|insights|guides|resources|articles",all_text))),
     ]
-    kn_score=_score([(ok,round(100/6)) for _,ok in kn_e],100)
+    kn_weights=[17,17,17,17,16,16]\n    kn_score=_score([(ok,w) for (_,ok),w in zip(kn_e,kn_weights)],100)
     kn_gaps=[x for x,ok in kn_e if not ok]
 
     # Trust Evidence
@@ -143,7 +168,7 @@ async def assess(url, business_name=None, mode="basic"):
       ("Robots/sitemap references are discoverable",bool(re.search(r"robots|sitemap",all_text+" "+" ".join(links),re.I))),
       ("Heading structure begins with a clear H1",bool(first["h1"])),
     ]
-    ta_score=_score([(ok,15) for _,ok in ta_e],100)
+    ta_weights=[15,15,15,15,15,15,10]\n    ta_score=_score([(ok,w) for (_,ok),w in zip(ta_e,ta_weights)],100)
     ta_gaps=[x for x,ok in ta_e if not ok]
 
     # Narrative Consistency: compare titles/H1 and repeated identity/service language across pages.
@@ -165,7 +190,7 @@ async def assess(url, business_name=None, mode="basic"):
       ("Third-party validation is explicitly referenced",bool(re.search(r"review|rating|accredit|member of|award|featured|press|media",all_text))),
       ("Structured sameAs/external identity links are present",any("sameas" in json.dumps(p["jsonld"]).lower() for p in page_data)),
     ]
-    ev_score=_score([(ok,34) for _,ok in ev_e],100)
+    ev_weights=[34,33,33]\n    ev_score=_score([(ok,w) for (_,ok),w in zip(ev_e,ev_weights)],100)
     ev_gaps=[x for x,ok in ev_e if not ok]
     signals=[
       _signal("entity_clarity","Entity Clarity",ent_score,100,[x for x,ok in ent_e if ok] or ["Limited clear entity evidence found."],gaps=ent_gaps),
@@ -178,7 +203,7 @@ async def assess(url, business_name=None, mode="basic"):
     score=round(sum(x["score"] for x in signals)/len(signals))
     strongest=max(signals,key=lambda x:x["score"]); weakest=min(signals,key=lambda x:x["score"])
     priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended.")} for x in signals],key=lambda x:x["score"])[:4]
-    return {"success":True,"mode":mode,"url":url,"business_name":name,"pages_assessed":len(page_data),
+    return {"success":True,"engine":"RbAI Trust Signal Engine","engine_version":"0.1","mode":mode,"url":url,"business_name":name,"pages_assessed":len(page_data),
             "pages_discovered":len(pages),"overall_score":score,"grade":"Leading" if score>=80 else "Strong" if score>=60 else "Developing" if score>=40 else "Needs Attention",
             "strongest_signal":strongest["label"],"weakest_signal":weakest["label"],"signals":signals,"priority_improvements":priorities,
             "limitations":["Basic mode assesses the homepage only." ] if mode=="basic" else ["Deep mode expands the crawl and evidence collection but does not guarantee complete external verification." ]}

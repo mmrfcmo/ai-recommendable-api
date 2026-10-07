@@ -1,0 +1,25 @@
+name: Trust Signal Engine Tests
+
+on:
+  push:
+    branches:
+      - main
+      - scanner-v2-shared-engine
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: pip install -r requirements.txt
+      - name: Run Trust Signal tests
+        run: python -m unittest tests/test_trust_signal_engine.py -v

@@ -11,6 +11,7 @@ from app.api.v1.bookings import router as bookings_router
 from app.api.v1.fulfilment_routes import router as fulfilment_router
 from app.api.v1.nap_checker import router as nap_checker_router
 from app.api.v1.growth_gap_v1 import router as growth_gap_router
+from app.api.v2.trust_assessment import router as trust_assessment_router
 import app.models  # noqa — ensure models are loaded
 import app.models.workflow_db  # noqa
 import os
@@ -41,6 +42,7 @@ app.include_router(bookings_router)
 app.include_router(fulfilment_router)
 app.include_router(nap_checker_router)
 app.include_router(growth_gap_router)
+app.include_router(trust_assessment_router)
 
 @app.get("/")
 async def root():
@@ -97,3 +99,35 @@ async def serve_scanner():
             return f.read()
     return "<h1>Scanner not found</h1>"
 
+
+@app.get("/trust-signals-scanner", response_class=HTMLResponse, include_in_schema=False)
+async def serve_trust_signals_scanner():
+    p = os.path.join(os.path.dirname(__file__), "trust-scanner-b.html")
+    if os.path.exists(p):
+        with open(p, encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Trust Signals Scanner not found</h1>"
+
+@app.get("/trust-basic-v2", response_class=HTMLResponse, include_in_schema=False)
+async def serve_trust_basic_v2():
+    p = os.path.join(os.path.dirname(__file__), "trust-basic-v2.html")
+    if os.path.exists(p):
+        with open(p, encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Trust Basic v2 not found</h1>"
+
+@app.get("/trust-signals-deep-scanner", response_class=HTMLResponse, include_in_schema=False)
+async def serve_trust_signals_deep_scanner():
+    p = os.path.join(os.path.dirname(__file__), "trust-deep-assessment.html")
+    if os.path.exists(p):
+        with open(p, encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Trust Signals Deep Scanner not found</h1>"
+
+@app.get("/trust-deep-assessment", response_class=HTMLResponse, include_in_schema=False)
+async def serve_trust_deep_assessment():
+    p = os.path.join(os.path.dirname(__file__), "trust-deep-assessment.html")
+    if os.path.exists(p):
+        with open(p, encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Trust Deep Assessment not found</h1>"

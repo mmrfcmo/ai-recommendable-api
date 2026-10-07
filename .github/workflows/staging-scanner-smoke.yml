@@ -1,0 +1,57 @@
+name: Staging Scanner Integration
+
+on:
+  push:
+    branches:
+      - scanner-v2-shared-engine
+  workflow_dispatch:
+
+jobs:
+  staging-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check staging health
+        run: |
+          set -e
+          curl --fail --silent --show-error --max-time 30             https://ai-recommendable-scanner-staging.onrender.com/health
+
+      - name: Test Basic Trust Signals Scanner
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 90             -H 'Content-Type: application/json'             -d '{"website":"https://recommendablebyai.com","mode":"basic"}'             https://ai-recommendable-scanner-staging.onrender.com/api/v2/trust-assessment/scan             > basic.json
+          python - <<'PY'
+          import json
+          d=json.load(open("basic.json"))
+          assert d["success"] is True
+          assert d["mode"] == "basic"
+          assert d["pages_assessed"] == 1
+          assert len(d["signals"]) == 6
+          assert [s["label"] for s in d["signals"]] == [
+              "Entity Clarity",
+              "Knowledge Completeness",
+              "Trust Evidence",
+              "Technical Accessibility",
+              "Narrative Consistency",
+              "External Validation",
+          ]
+          assert 0 <= d["overall_score"] <= 100
+          assert all(0 <= s["score"] <= 100 for s in d["signals"])
+          print("Basic scanner OK:", d["overall_score"], d["pages_assessed"])
+          PY
+
+      - name: Test Deep Trust Signals Scanner
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 150             -H 'Content-Type: application/json'             -d '{"website":"https://recommendablebyai.com","mode":"deep"}'             https://ai-recommendable-scanner-staging.onrender.com/api/v2/trust-assessment/scan             > deep.json
+          python - <<'PY'
+          import json
+          d=json.load(open("deep.json"))
+          assert d["success"] is True
+          assert d["mode"] == "deep"
+          assert 1 <= d["pages_assessed"] <= 8
+          assert len(d["signals"]) == 6
+          assert 0 <= d["overall_score"] <= 100
+          assert all(0 <= s["score"] <= 100 for s in d["signals"])
+          assert d["priority_improvements"]
+          print("Deep scanner OK:", d["overall_score"], d["pages_assessed"])
+          PY

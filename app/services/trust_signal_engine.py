@@ -1,3 +1,14 @@
+def _commercial_recommendation(score, signals):
+    weakest=sorted(signals,key=lambda x:x["score"])[:2]
+    names=[x["label"] for x in weakest]
+    if score < 50:
+        tier="Trust Transformation"; price="£995"; reason="The assessment identifies several foundational Trust Signal weaknesses that should be addressed before pursuing broader visibility or growth activity."
+    elif score < 70:
+        tier="AI Trust Optimisation"; price="£1,249"; reason="The business has a workable Trust Signal foundation, but several evidence and consistency gaps are limiting how clearly its digital representation is supported."
+    else:
+        tier="Advanced Visibility"; price="£1,995"; reason="The core Trust Signal foundation is comparatively strong, so the next priority is strengthening depth, consistency and external validation around the weakest areas."
+    return {"recommended_treatment":tier,"indicative_price":price,"reason":reason,"priority_signals":names,"disclaimer":"Indicative recommendation based on this automated Trust Signals assessment. Final scope and price should be confirmed after human review."}
+
 """Shared Trust Signal assessment engine.
 Basic and Deep modes use the same evidence model and six-signal taxonomy.
 Scanner B is deliberately not modified by this module.
@@ -215,10 +226,66 @@ async def assess(url, business_name=None, mode="basic"):
       _signal("narrative_consistency","Narrative Consistency",nc_score,100,[x for x,ok in nc_e if ok] or ["Narrative consistency needs deeper review."],gaps=nc_gaps),
       _signal("external_validation","External Validation",ev_score,100,[x for x,ok in ev_e if ok] or ["No strong external validation evidence was visible on the assessed pages."],ev_limit,ev_gaps),
     ]
+    # Translate binary evidence into commercially useful diagnostic context.
+    advice={
+      "Entity Clarity":{
+        "Business identity appears consistently across assessed pages":("Identity is not consistently reinforced across the assessed site.","Inconsistent identity can make the business harder to interpret confidently across pages and systems.","Strengthen the repeated business identity, organisation description and core entity references."),
+        "Clear H1 and page title are present":("Page-level identity is not consistently explicit.","Weak page-level identity can reduce clarity about what the business is and what each page represents.","Clarify page titles and H1s around the business, service and audience."),
+        "About/company/purpose language is present":("The site does not clearly explain who the organisation is or what it does.","A visitor or system may have to infer the organisation's purpose rather than receiving a clear first-party explanation.","Strengthen the organisation and purpose narrative with concise first-party language."),
+        "Organisation or LocalBusiness structured identity is present":("Machine-readable business identity is not sufficiently exposed.","Important entity information may be harder for systems to interpret consistently from the site itself.","Add or strengthen appropriate organisation/business structured identity and keep it aligned with visible content."),
+        "Contact/location information is discoverable":("Business accountability or location information is not sufficiently clear.","Unclear accountability can weaken confidence and make the business entity harder to distinguish from alternatives.","Strengthen contact, location and accountability information."),
+      },
+      "Knowledge Completeness":{
+        "Services/products are explicitly described":("Core services or products are not clearly described.","Visitors and systems may not have enough first-party information to understand exactly what the business provides.","Expand service/product descriptions with clear scope, audience, outcomes and supporting detail."),
+        "Service/topic detail exists beyond navigation labels":("The assessed site contains limited substantive information beyond navigation-level descriptions.","Thin detail leaves important business knowledge implicit rather than explicitly represented.","Develop deeper service/topic content that answers practical customer questions."),
+        "FAQ or question-answer content is present":("Common customer questions are not clearly answered on the assessed pages.","Important decision-stage knowledge may be missing when prospects are evaluating the business.","Add useful question-and-answer content around objections, process, suitability and common concerns."),
+        "Expertise/experience is described":("The site's expertise or experience is not sufficiently evidenced.","Prospects may understand what is offered without understanding why this business is qualified to provide it.","Make relevant experience, expertise, qualifications and specialist capability explicit."),
+        "Relevant locations/audience served are described":("The audience or geographic scope served is not sufficiently explicit.","Relevance can be harder to establish when the site does not clearly state who or where the business serves.","Clarify target audience, locations served and service-area relevance."),
+        "Supporting content/resources are discoverable":("There is limited supporting content that develops the business's expertise.","The site has fewer opportunities to demonstrate depth, answer questions and reinforce its subject-matter authority.","Develop supporting resources such as guides, insights, FAQs or useful articles."),
+      },
+      "Trust Evidence":{
+        "Reviews/testimonials are referenced":("Customer feedback is not sufficiently visible on the assessed pages.","Prospects may have less direct evidence that other customers have had a positive experience.","Surface relevant reviews, testimonials and customer feedback in context."),
+        "Case studies/results/outcomes are present":("Specific outcomes or case evidence are not sufficiently demonstrated.","Claims are harder to evaluate when prospects cannot see concrete examples of results or outcomes.","Add concise case studies, examples, outcomes and before/after evidence where appropriate."),
+        "Credentials/accreditations/awards are stated":("Credentials or recognised qualifications are not sufficiently evidenced.","The business may be credible in reality but the site does not make that credibility easy to verify.","Present relevant qualifications, accreditations, memberships and awards with context."),
+        "Specific proof or client evidence is present":("Specific client or project evidence is limited.","Generic claims provide less confidence than identifiable examples of work, clients or projects.","Strengthen proof with appropriate client, project, portfolio or outcome evidence."),
+        "Contact and business details support accountability":("Accountability details are not sufficiently visible.","Reduced transparency can make it harder for prospects to assess who stands behind the business.","Strengthen contact, business and accountability information."),
+      },
+      "Technical Accessibility":{
+        "HTTPS is used":("The site is not consistently secured with HTTPS.","An insecure connection can undermine user confidence and technical trust.","Move all customer-facing pages and resources to HTTPS."),
+        "Meta description is present":("A clear meta description is missing from the assessed page.","The page has less controlled explanatory context available to systems and users in search-style previews.","Add a concise, accurate description aligned with the page's purpose."),
+        "Viewport is present":("Mobile viewport configuration is missing.","The page may provide weaker mobile presentation and accessibility signals.","Implement an appropriate responsive viewport configuration."),
+        "Canonical URL is present":("A canonical URL is not clearly declared.","URL versioning can become less explicit when multiple address variants exist.","Add an appropriate canonical URL and keep URL signals consistent."),
+        "Structured data is machine-readable":("Machine-readable structured data is limited or absent.","Important first-party information may rely more heavily on interpretation of page text.","Add appropriate structured data that reflects the visible business information."),
+        "Robots/sitemap references are discoverable":("Robots or sitemap references are not clearly discoverable.","Technical discovery and site understanding may be less explicit than they could be.","Ensure robots and sitemap references are correctly exposed and aligned with the live site."),
+        "Heading structure begins with a clear H1":("A clear primary heading is missing.","The page's primary subject is less explicit in its visible structure.","Introduce one clear, descriptive H1 aligned with the page purpose."),
+      },
+      "Narrative Consistency":{
+        "Assessed pages have page titles":("Page titles are not consistently present.","The site's page-level narrative is less explicit and consistent.","Standardise meaningful page titles around service, audience and purpose."),
+        "Assessed pages have clear H1s":("Primary headings are not consistently clear across assessed pages.","Visitors and systems may receive inconsistent cues about each page's purpose.","Strengthen H1 structure and align it with each page's actual purpose."),
+        "Business identity is repeated consistently":("Business identity is not consistently reinforced across pages.","Different or incomplete identity cues can weaken the coherence of the overall business representation.","Create consistent organisation and brand references across key pages."),
+        "Core service language repeats across pages":("Core service language is not consistently reinforced across the assessed pages.","The site's narrative may not build a strong, repeated understanding of what the business is known for.","Align service terminology across core pages and supporting content."),
+        "No obvious conflicting identity terms found":("Potentially conflicting identity language was detected.","Conflicting descriptions can create ambiguity about the organisation, offer or positioning.","Review conflicting terminology and establish one consistent core narrative."),
+      },
+      "External Validation":{
+        "Website exposes links/references to external profiles or authorities":("Relevant external profiles or authority references are not clearly connected from the site.","First-party claims have fewer visible connections to external validation sources.","Connect appropriate external profiles, professional bodies or authoritative references where genuinely relevant."),
+        "Third-party validation is explicitly referenced":("Third-party validation is not clearly referenced on the assessed pages.","Prospects have fewer external trust cues to support the business's claims.","Surface relevant reviews, memberships, awards, media or professional validation with accurate context."),
+        "Structured sameAs/external identity links are present":("Structured external identity relationships are not clearly declared.","The relationship between the business entity and its legitimate external profiles is less explicit.","Use appropriate sameAs relationships where they accurately represent the same business entity."),
+      }
+    }
+    for sig in signals:
+        sig["diagnostic_context"]=[]
+        for gap in sig.get("gaps",[]):
+            item=advice.get(sig["label"],{}).get(gap)
+            if item:
+                meaning,impact,action=item
+                sig["diagnostic_context"].append({"finding":gap,"meaning":meaning,"business_impact":impact,"recommended_action":action})
+        if not sig["diagnostic_context"]:
+            sig["diagnostic_context"].append({"finding":"No major automated gap identified.","meaning":"The assessed evidence supports this Trust Signal.","business_impact":"This is a relative strength to preserve and reinforce.","recommended_action":"Maintain the signal and strengthen it with additional evidence as the site evolves."})
     score=round(sum(x["score"] for x in signals)/len(signals))
     strongest=max(signals,key=lambda x:x["score"]); weakest=min(signals,key=lambda x:x["score"])
     priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended."),"evidence":(x["evidence"][:2] if x.get("evidence") else [])} for x in signals],key=lambda x:x["score"])[:4]
     return {"success":True,"engine":"RbAI Trust Signal Engine","engine_version":"0.1","mode":mode,"url":url,"business_name":name,"pages_assessed":len(page_data),
             "pages_discovered":len(pages),"overall_score":score,"grade":"Leading" if score>=80 else "Strong" if score>=60 else "Developing" if score>=40 else "Needs Attention",
             "strongest_signal":strongest["label"],"weakest_signal":weakest["label"],"signals":signals,"priority_improvements":priorities,
+            "commercial_recommendation": _commercial_recommendation(score, signals),
             "limitations":["Basic mode assesses the homepage only." ] if mode=="basic" else ["Deep mode expands the crawl and evidence collection but does not guarantee complete external verification." ]}

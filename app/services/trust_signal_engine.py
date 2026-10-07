@@ -73,7 +73,12 @@ async def assess(url, business_name=None, mode="basic"):
             internal=[x for x in links if urlparse(x).netloc==parsed.netloc and x.split("#")[0].startswith(root)]
             return {"url":page_url,"html":html,"soup":soup,"text":text,"title":title,"h1":h1,"h2":h2,
                     "desc":desc,"internal":list(dict.fromkeys(internal)),"jsonld":_jsonld(soup)}
-        first_data=parse(str(first.url),first.text); page_data.append(first_data)
+        # Use the resolved URL after redirects for canonical host/scheme checks.
+        url=str(first.url).split("#")[0]
+        parsed=urlparse(url)
+        root=f"{parsed.scheme}://{parsed.netloc}"
+        pages=[url]
+        first_data=parse(url,first.text); page_data.append(first_data)
         if mode=="deep":
             # Bounded breadth-first crawl: expand internal links from each assessed page
             # until the shared deep-mode page budget is reached.

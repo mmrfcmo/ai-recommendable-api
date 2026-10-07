@@ -218,6 +218,14 @@ async def assess(url, business_name=None, mode="basic"):
     ev_weights=[34,33,33]
     ev_score=_score([(ok,w) for (_,ok),w in zip(ev_e,ev_weights)],100)
     ev_gaps=[x for x,ok in ev_e if not ok]
+    signals=[
+      _signal("entity_clarity","Entity Clarity",ent_score,100,[x for x,ok in ent_e if ok] or ["Limited clear entity evidence found."],gaps=ent_gaps),
+      _signal("knowledge_completeness","Knowledge Completeness",kn_score,100,[x for x,ok in kn_e if ok] or ["Important business knowledge was not clearly found."],gaps=kn_gaps),
+      _signal("trust_evidence","Trust Evidence",tr_score,100,[x for x,ok in tr_e if ok] or ["Limited direct trust evidence found."],gaps=tr_gaps),
+      _signal("technical_accessibility","Technical Accessibility",ta_score,100,[x for x,ok in ta_e if ok] or ["Technical accessibility evidence is limited."],gaps=ta_gaps),
+      _signal("narrative_consistency","Narrative Consistency",nc_score,100,[x for x,ok in nc_e if ok] or ["Narrative consistency needs deeper review."],gaps=nc_gaps),
+      _signal("external_validation","External Validation",ev_score,100,[x for x,ok in ev_e if ok] or ["No strong external validation evidence was visible on the assessed pages."],ev_limit,ev_gaps),
+    ]
     # Translate binary evidence into commercially useful diagnostic context.
     advice={
       "Entity Clarity":{
@@ -273,14 +281,6 @@ async def assess(url, business_name=None, mode="basic"):
                 sig["diagnostic_context"].append({"finding":gap,"meaning":meaning,"business_impact":impact,"recommended_action":action})
         if not sig["diagnostic_context"]:
             sig["diagnostic_context"].append({"finding":"No major automated gap identified.","meaning":"The assessed evidence supports this Trust Signal.","business_impact":"This is a relative strength to preserve and reinforce.","recommended_action":"Maintain the signal and strengthen it with additional evidence as the site evolves."})
-    signals=[
-      _signal("entity_clarity","Entity Clarity",ent_score,100,[x for x,ok in ent_e if ok] or ["Limited clear entity evidence found."],gaps=ent_gaps),
-      _signal("knowledge_completeness","Knowledge Completeness",kn_score,100,[x for x,ok in kn_e if ok] or ["Important business knowledge was not clearly found."],gaps=kn_gaps),
-      _signal("trust_evidence","Trust Evidence",tr_score,100,[x for x,ok in tr_e if ok] or ["Limited direct trust evidence found."],gaps=tr_gaps),
-      _signal("technical_accessibility","Technical Accessibility",ta_score,100,[x for x,ok in ta_e if ok] or ["Technical accessibility evidence is limited."],gaps=ta_gaps),
-      _signal("narrative_consistency","Narrative Consistency",nc_score,100,[x for x,ok in nc_e if ok] or ["Narrative consistency needs deeper review."],gaps=nc_gaps),
-      _signal("external_validation","External Validation",ev_score,100,[x for x,ok in ev_e if ok] or ["No strong external validation evidence was visible on the assessed pages."],ev_limit,ev_gaps),
-    ]
     score=round(sum(x["score"] for x in signals)/len(signals))
     strongest=max(signals,key=lambda x:x["score"]); weakest=min(signals,key=lambda x:x["score"])
     priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended."),"evidence":(x["evidence"][:2] if x.get("evidence") else [])} for x in signals],key=lambda x:x["score"])[:4]

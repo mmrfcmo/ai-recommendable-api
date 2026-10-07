@@ -56,7 +56,7 @@ document.getElementById('sf').classList.add('hidden');document.getElementById('l
 document.getElementById('ps').textContent=d;document.getElementById('rd').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 document.getElementById('ls').textContent='Assessing your website against the six Trust Signals...';
 try{
- var res=await fetch('/api/v2/trust-assessment/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({website:fu,business_name:d,mode:'basic'})});
+ var res=await fetch('/api/v2/trust-assessment/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({website:fu,mode:'basic'})});
  var data=await res.json();
  if(!res.ok||!data.success){throw new Error(data.error||'Assessment failed');}
  var total=data.overall_score||0;
@@ -66,7 +66,7 @@ try{
  var gc=total>=80?'bg-emerald-900/50 text-emerald-400 border-emerald-800':total>=60?'bg-lime-900/50 text-lime-400 border-lime-800':total>=40?'bg-orange-900/50 text-orange-400 border-orange-800':'bg-red-900/50 text-red-400 border-red-800';
  document.getElementById('gb').className='inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider border '+gc;
  document.getElementById('gt').textContent=data.grade||'Needs Attention';
- document.getElementById('gtl').textContent=total<100?'+'+(100-total)+' pts to 100':'100';
+
  var signals=data.signals||[];
  var bh='',dh='';
  signals.forEach(function(s,i){

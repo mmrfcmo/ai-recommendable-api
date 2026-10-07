@@ -200,7 +200,7 @@ async def assess(url, business_name=None, mode="basic"):
     ev_limit=["This automated assessment does not claim to verify third-party directories, reviews, citations or external authority in full."]
     ev_e=[
       ("Website exposes links/references to external profiles or authorities",
-       any(re.search(r"(linkedin\\.com|facebook\\.com|instagram\\.com|trustpilot\\.com|yell\\.com|checkatrade\\.com|yelp\\.com|google\\.com)",href) for href in external_hrefs)),
+       any(re.search(r"(linkedin\.com|facebook\.com|instagram\.com|trustpilot\.com|yell\.com|checkatrade\.com|yelp\.com|google\.com)",href) for href in external_hrefs)),
       ("Third-party validation is explicitly referenced",bool(re.search(r"review|rating|accredit|member of|award|featured|press|media",all_text))),
       ("Structured sameAs/external identity links are present",any("sameas" in json.dumps(p["jsonld"]).lower() for p in page_data)),
     ]

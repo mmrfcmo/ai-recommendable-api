@@ -1,10 +1,10 @@
-"""New shared-engine Trust Signal assessment routes. Does not alter legacy Scanner B."""
+"""RbAI Trust Signal assessment API. Shared engine for the customer-facing Trust Signals Scanner and Trust Signals Deep Scanner."""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional
 from app.services.trust_signal_engine import assess
 
-router=APIRouter(prefix="/api/v2/trust-assessment",tags=["Trust Signal Assessment v2"])
+router=APIRouter(prefix="/api/v2/trust-assessment",tags=["RbAI Trust Signal Assessment"])
 
 class AssessmentRequest(BaseModel):
     website:str=Field(...,min_length=3,max_length=512)

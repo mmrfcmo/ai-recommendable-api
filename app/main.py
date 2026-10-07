@@ -116,6 +116,14 @@ async def serve_trust_basic_v2():
             return f.read()
     return "<h1>Trust Basic v2 not found</h1>"
 
+@app.get("/trust-signals-deep-scanner", response_class=HTMLResponse, include_in_schema=False)
+async def serve_trust_signals_deep_scanner():
+    p = os.path.join(os.path.dirname(__file__), "trust-deep-assessment.html")
+    if os.path.exists(p):
+        with open(p, encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Trust Signals Deep Scanner not found</h1>"
+
 @app.get("/trust-deep-assessment", response_class=HTMLResponse, include_in_schema=False)
 async def serve_trust_deep_assessment():
     p = os.path.join(os.path.dirname(__file__), "trust-deep-assessment.html")

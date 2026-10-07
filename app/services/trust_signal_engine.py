@@ -3,7 +3,6 @@ Basic and Deep modes use the same evidence model and six-signal taxonomy.
 Scanner B is deliberately not modified by this module.
 """
 import json, logging, re
-from collections import Counter
 from urllib.parse import urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
@@ -52,7 +51,7 @@ async def assess(url, business_name=None, mode="basic"):
     pages=[url]
     max_pages=1 if mode=="basic" else 8
     timeout=12 if mode=="basic" else 10
-    evidence=[]; page_data=[]
+    page_data=[]
     headers={"User-Agent":"RbAI-TrustSignalsScanner/1.0"}
     async with httpx.AsyncClient(timeout=timeout,follow_redirects=True,headers=headers) as client:
         try:
@@ -107,7 +106,7 @@ async def assess(url, business_name=None, mode="basic"):
                     logger.info("deep page skipped %s: %s",clean,exc)
 
     texts=[p["text"] for p in page_data]; all_text=" ".join(texts).lower()
-    first=page_data[0]; soup=first["soup"]; html=first["html"]
+    first=page_data[0]; soup=first["soup"]
     name=business_name.strip() if business_name else ""
     if not name:
         # Prefer explicit Organization/LocalBusiness names from structured data.
@@ -165,6 +164,8 @@ async def assess(url, business_name=None, mode="basic"):
 
     # Technical Accessibility
     links=[a.get("href","") for a in soup.find_all("a",href=True)]
+    all_links=[a for p in page_data for a in p["soup"].find_all("a",href=True)]
+    external_hrefs=[a.get("href","").lower() for a in all_links if a.get("href","").startswith(("http://","https://"))]
     ta_e=[
       ("HTTPS is used",url.startswith("https://")),
       ("Meta description is present",bool(first["desc"])),
@@ -184,7 +185,12 @@ async def assess(url, business_name=None, mode="basic"):
       ("Assessed pages have page titles",len(titles)>=max(1,len(page_data)//2)),
       ("Assessed pages have clear H1s",len(h1s)>=max(1,len(page_data)//2)),
       ("Business identity is repeated consistently",identity_mentions>=max(1,len(page_data)//2)),
-      ("Core service language repeats across pages",len(set(re.findall(r"\b(?:services?|solutions?|consulting|specialist|professional)\b",all_text)))>=2),
+      ("Core service language repeats across pages",
+       (len(page_data)==1 and bool(re.search(r"\b(?:services?|solutions?|consulting|specialist|professional)\b",all_text)))
+       or (len(page_data)>1 and any(
+           sum(bool(re.search(r"\b"+term+r"\b",p["text"].lower())) for p in page_data)>=2
+           for term in ("service","services","solution","solutions","consulting","specialist","professional")
+       ))),
       ("No obvious conflicting identity terms found",not bool(re.search(r"welcome to|we are [^.]{0,80}\b(?:different|formerly|previously)\b",all_text))),
     ]
     nc_score=_score([(ok,20) for _,ok in nc_e],100)
@@ -193,7 +199,8 @@ async def assess(url, business_name=None, mode="basic"):
     # External Validation is deliberately evidence-aware, not fabricated.
     ev_limit=["This automated assessment does not claim to verify third-party directories, reviews, citations or external authority in full."]
     ev_e=[
-      ("Website exposes links/references to external profiles or authorities",bool(re.search(r"google|linkedin|facebook|instagram|trustpilot|yell|checkatrade|yelp|directory|association|professional body",all_text))),
+      ("Website exposes links/references to external profiles or authorities",
+       any(re.search(r"(linkedin\\.com|facebook\\.com|instagram\\.com|trustpilot\\.com|yell\\.com|checkatrade\\.com|yelp\\.com|google\\.com)",href) for href in external_hrefs)),
       ("Third-party validation is explicitly referenced",bool(re.search(r"review|rating|accredit|member of|award|featured|press|media",all_text))),
       ("Structured sameAs/external identity links are present",any("sameas" in json.dumps(p["jsonld"]).lower() for p in page_data)),
     ]

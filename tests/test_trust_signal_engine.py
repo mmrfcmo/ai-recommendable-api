@@ -104,5 +104,89 @@ class TrustSignalEngineTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["url"], "https://example.com/")
 
+    def test_signal_weight_sets_total_100(self):
+        weight_sets = {
+            "knowledge_completeness": [17, 17, 17, 17, 16, 16],
+            "technical_accessibility": [15, 15, 15, 15, 15, 15, 10],
+            "external_validation": [34, 33, 33],
+        }
+        for weights in weight_sets.values():
+            self.assertEqual(sum(weights), 100)
+
+    def test_jsonld_business_name_inference(self):
+        html = '<html><head><title>Fallback Title</title><script type="application/ld+json">{"@type":"Organization","name":"Structured Example Ltd"}</script></head><body><h1>Structured Example Ltd</h1><p>Services and contact us.</p></body></html>'
+
+        class Response:
+            url = "https://example.com/"
+            text = html
+            status_code = 200
+            def raise_for_status(self):
+                return None
+
+        class Client:
+            def __init__(self, *args, **kwargs): pass
+            async def __aenter__(self): return self
+            async def __aexit__(self, *args): return None
+            async def get(self, url): return Response()
+
+        async def run():
+            with patch.object(trust_signal_engine.httpx, "AsyncClient", Client):
+                return await trust_signal_engine.assess("https://example.com/", mode="basic")
+
+        import asyncio
+        result = asyncio.run(run())
+        self.assertTrue(result["success"])
+        self.assertEqual(result["business_name"], "Structured Example Ltd")
+
+    def test_external_profile_evidence_is_detected(self):
+        html = '<html><head><title>Example</title></head><body><h1>Example</h1><p>Our reviews and awards.</p><a href="https://www.linkedin.com/company/example">LinkedIn</a></body></html>'
+
+        class Response:
+            url = "https://example.com/"
+            text = html
+            status_code = 200
+            def raise_for_status(self): return None
+
+        class Client:
+            def __init__(self, *args, **kwargs): pass
+            async def __aenter__(self): return self
+            async def __aexit__(self, *args): return None
+            async def get(self, url): return Response()
+
+        async def run():
+            with patch.object(trust_signal_engine.httpx, "AsyncClient", Client):
+                return await trust_signal_engine.assess("https://example.com/", mode="basic")
+
+        import asyncio
+        result = asyncio.run(run())
+        self.assertTrue(result["success"])
+        external = next(s for s in result["signals"] if s["name"] == "external_validation")
+        self.assertIn("Website exposes links/references to external profiles or authorities", external["evidence"])
+
+    def test_deep_mode_respects_eight_page_cap(self):
+        links = "".join(f'<a href="/page{i}">Page {i}</a>' for i in range(1, 20))
+        pages = {"https://example.com/": f"<html><head><title>Example</title></head><body><h1>Example</h1>{links}</body></html>"}
+        for i in range(1, 20):
+            pages[f"https://example.com/page{i}"] = f'<html><head><title>Page {i}</title></head><body><h1>Page {i}</h1><p>Services and experience.</p></body></html>'
+
+        class Response:
+            def __init__(self, url): self.url, self.text, self.status_code = url, pages[url], 200
+            def raise_for_status(self): return None
+
+        class Client:
+            def __init__(self, *args, **kwargs): pass
+            async def __aenter__(self): return self
+            async def __aexit__(self, *args): return None
+            async def get(self, url): return Response(url.rstrip("/") if url != "https://example.com/" else url)
+
+        async def run():
+            with patch.object(trust_signal_engine.httpx, "AsyncClient", Client):
+                return await trust_signal_engine.assess("https://example.com/", mode="deep")
+
+        import asyncio
+        result = asyncio.run(run())
+        self.assertTrue(result["success"])
+        self.assertEqual(result["pages_assessed"], 8)
+
 if __name__ == "__main__":
     unittest.main()

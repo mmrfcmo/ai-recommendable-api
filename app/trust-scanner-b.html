@@ -79,7 +79,7 @@ try{
  });
  document.getElementById('sgb').innerHTML=bh;document.getElementById('scd').innerHTML=dh;
  var ph='';(data.priority_improvements||[]).forEach(function(p,i){ph+='<div class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 flex items-center gap-4"><div class="w-7 h-7 rounded-full bg-amber-500 text-zinc-900 flex items-center justify-center font-bold text-sm">'+(i+1)+'</div><div class="flex-1"><p class="text-sm font-medium text-white">'+esc(p.signal)+'</p><p class="text-xs text-zinc-400">'+esc(p.issue)+'</p></div><div class="text-xs text-zinc-500">'+esc(p.score)+'/100</div></div>'});
- document.getElementById('prr').innerHTML=ph||'<div class="text-sm text-zinc-400">No priority improvements identified.</div>';document.getElementById('tu').classList.add('hidden');
+ document.getElementById('prr').innerHTML=ph||'<div class="text-sm text-zinc-400">No priority improvements identified.</div>';
  document.getElementById('ld').classList.add('hidden');document.getElementById('rc').classList.remove('hidden');setTimeout(function(){document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'})},200);
 }catch(err){document.getElementById('ls').textContent='We could not complete the assessment. Please check the website address and try again.';setTimeout(function(){document.getElementById('ld').classList.add('hidden');document.getElementById('sf').classList.remove('hidden');document.getElementById('sb').disabled=false},2500);}
 });

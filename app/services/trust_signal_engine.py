@@ -143,7 +143,8 @@ async def assess(url, business_name=None, mode="basic"):
       ("Relevant locations/audience served are described",bool(re.search(r"serving|serve|based in|areas we cover|locations|local",all_text))),
       ("Supporting content/resources are discoverable",bool(re.search(r"blog|news|insights|guides|resources|articles",all_text))),
     ]
-    kn_weights=[17,17,17,17,16,16]\n    kn_score=_score([(ok,w) for (_,ok),w in zip(kn_e,kn_weights)],100)
+    kn_weights=[17,17,17,17,16,16]
+    kn_score=_score([(ok,w) for (_,ok),w in zip(kn_e,kn_weights)],100)
     kn_gaps=[x for x,ok in kn_e if not ok]
 
     # Trust Evidence
@@ -168,7 +169,8 @@ async def assess(url, business_name=None, mode="basic"):
       ("Robots/sitemap references are discoverable",bool(re.search(r"robots|sitemap",all_text+" "+" ".join(links),re.I))),
       ("Heading structure begins with a clear H1",bool(first["h1"])),
     ]
-    ta_weights=[15,15,15,15,15,15,10]\n    ta_score=_score([(ok,w) for (_,ok),w in zip(ta_e,ta_weights)],100)
+    ta_weights=[15,15,15,15,15,15,10]
+    ta_score=_score([(ok,w) for (_,ok),w in zip(ta_e,ta_weights)],100)
     ta_gaps=[x for x,ok in ta_e if not ok]
 
     # Narrative Consistency: compare titles/H1 and repeated identity/service language across pages.
@@ -190,7 +192,8 @@ async def assess(url, business_name=None, mode="basic"):
       ("Third-party validation is explicitly referenced",bool(re.search(r"review|rating|accredit|member of|award|featured|press|media",all_text))),
       ("Structured sameAs/external identity links are present",any("sameas" in json.dumps(p["jsonld"]).lower() for p in page_data)),
     ]
-    ev_weights=[34,33,33]\n    ev_score=_score([(ok,w) for (_,ok),w in zip(ev_e,ev_weights)],100)
+    ev_weights=[34,33,33]
+    ev_score=_score([(ok,w) for (_,ok),w in zip(ev_e,ev_weights)],100)
     ev_gaps=[x for x,ok in ev_e if not ok]
     signals=[
       _signal("entity_clarity","Entity Clarity",ent_score,100,[x for x,ok in ent_e if ok] or ["Limited clear entity evidence found."],gaps=ent_gaps),

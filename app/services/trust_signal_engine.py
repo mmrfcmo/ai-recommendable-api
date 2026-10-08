@@ -272,6 +272,14 @@ async def assess(url, business_name=None, mode="basic"):
         "Structured sameAs/external identity links are present":("Structured external identity relationships are not clearly declared.","The relationship between the business entity and its legitimate external profiles is less explicit.","Use appropriate sameAs relationships where they accurately represent the same business entity."),
       }
     }
+    synthesis={
+      "Entity Clarity":{"strong":"The website gives a clear and consistent picture of who the business is, what it does and who it serves. The identity is reinforced across the areas assessed rather than being left for the visitor to infer.","intro":"The website gives a reasonably clear picture of the business, but some parts of its identity are less explicit than others."},
+      "Knowledge Completeness":{"strong":"The website provides substantial information about what the business offers, who it serves and the questions a prospective customer may have. The core proposition is supported by useful detail rather than relying only on short service descriptions.","intro":"The website explains the core offer, but some of the information a prospective customer may need before making a decision is less fully developed."},
+      "Trust Evidence":{"strong":"The website provides several forms of evidence that support the business's claims, including customer, project or credibility evidence. This gives a prospective customer more than the business's own claims to consider.","intro":"The website contains some evidence that supports the business's claims, but the proof is not equally strong across the areas we assessed."},
+      "Technical Accessibility":{"strong":"The core technical foundations we checked are largely in place. The website is accessible to people and contains the main structural signals that help systems interpret its pages.","intro":"The core technical foundations are mostly in place, but some of the signals that help systems access, distinguish and interpret the site's pages could be clearer."},
+      "Narrative Consistency":{"strong":"The assessed pages tell a consistent story about the business. The identity, page purposes and core service language reinforce rather than contradict one another.","intro":"The main story is reasonably consistent, but some pages or elements do not reinforce the same understanding as clearly as they could."},
+      "External Validation":{"strong":"The website is supported by visible references to evidence outside the site, giving a prospective customer additional ways to validate what the business says about itself.","intro":"The website contains some signs of external validation, but the wider evidence supporting the business is not connected or reinforced as clearly as it could be."}
+    }
     for sig in signals:
         sig["diagnostic_context"]=[]
         for gap in sig.get("gaps",[]):
@@ -290,8 +298,14 @@ async def assess(url, business_name=None, mode="basic"):
         probe=probe_questions.get(sig["label"])
         for item in sig["diagnostic_context"]:
             item["question"]=probe
-        if not sig["diagnostic_context"]:
-            sig["diagnostic_context"].append({"finding":"No major automated gap identified.","question":probe,"meaning":"The assessed evidence supports this Trust Signal.","business_impact":"This is a relative strength to preserve and reinforce.","recommended_action":"Maintain the signal and strengthen it with additional evidence as the site evolves."})
+        gap_count=len(sig.get("gaps",[]))
+        if gap_count==0:
+            sig["diagnostic_summary"]=synthesis[sig["label"]]["strong"]
+            sig["diagnostic_status"]="strength"
+            sig["diagnostic_context"].append({"finding":"No major automated gap identified.","question":probe,"meaning":"This area is currently a relative strength based on the evidence assessed.","business_impact":"A clear and consistent signal gives the rest of the business representation a stronger foundation.","recommended_action":"Preserve this strength and keep it consistent as the website, services and supporting content evolve."})
+        else:
+            sig["diagnostic_summary"]=synthesis[sig["label"]]["intro"]
+            sig["diagnostic_status"]="opportunity"
     score=round(sum(x["score"] for x in signals)/len(signals))
     strongest=max(signals,key=lambda x:x["score"]); weakest=min(signals,key=lambda x:x["score"])
     priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended."),"evidence":(x["evidence"][:2] if x.get("evidence") else [])} for x in signals if x.get("gaps") and x["score"]<80],key=lambda x:x["score"])[:4]

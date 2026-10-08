@@ -283,9 +283,43 @@ async def assess(url, business_name=None, mode="basic"):
             sig["diagnostic_context"].append({"finding":"No major automated gap identified.","meaning":"The assessed evidence supports this Trust Signal.","business_impact":"This is a relative strength to preserve and reinforce.","recommended_action":"Maintain the signal and strengthen it with additional evidence as the site evolves."})
     score=round(sum(x["score"] for x in signals)/len(signals))
     strongest=max(signals,key=lambda x:x["score"]); weakest=min(signals,key=lambda x:x["score"])
-    priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended."),"evidence":(x["evidence"][:2] if x.get("evidence") else [])} for x in signals],key=lambda x:x["score"])[:4]
+    ranked=sorted(signals,key=lambda x:x["score"])
+    priorities=[]
+    for x in ranked[:4]:
+        contexts=x.get("diagnostic_context",[])
+        primary=contexts[0] if contexts else {
+            "meaning":"Further evidence review is recommended.",
+            "business_impact":"The available evidence is not sufficient to draw a stronger conclusion.",
+            "recommended_action":"Review this area in more detail before deciding on treatment."
+        }
+        priorities.append({
+            "signal":x["label"],
+            "score":x["score"],
+            "issue":primary.get("meaning","Further evidence review is recommended."),
+            "meaning":primary.get("meaning","Further evidence review is recommended."),
+            "business_impact":primary.get("business_impact","The available evidence is not sufficient to draw a stronger conclusion."),
+            "recommended_action":primary.get("recommended_action","Review this area in more detail before deciding on treatment."),
+            "evidence":x["evidence"][:2] if x.get("evidence") else []
+        })
+    weak_names=", ".join(x["label"] for x in ranked[:2])
+    if score < 50:
+        diagnosis=f"The assessment identifies foundational Trust Signal weaknesses, particularly in {weak_names}. The immediate priority is to strengthen the underlying representation and evidence before adding further activity."
+        prescription="Strengthen the weakest Trust Signals first, then align the supporting content, technical signals and evidence so the website presents a clearer and more consistent representation of the business."
+    elif score < 70:
+        diagnosis=f"The website has a workable Trust Signal foundation, but {weak_names} stand out as areas where the digital representation could be clearer, better evidenced or more consistent."
+        prescription="Address the weakest Trust Signals first, using the evidence identified in this assessment to improve clarity, supporting knowledge, trust evidence and consistency."
+    else:
+        diagnosis=f"The overall Trust Signal foundation is comparatively strong. The main opportunity is to strengthen the weaker areas, particularly {weak_names}, rather than making broad changes across the whole site."
+        prescription="Preserve the stronger signals while improving the weaker areas with targeted evidence, clearer representation and greater consistency."
+    synthesis={
+        "diagnosis":diagnosis,
+        "prescription":prescription,
+        "strongest_signal":strongest["label"],
+        "priority_signals":[x["label"] for x in ranked[:3]]
+    }
     return {"success":True,"engine":"RbAI Trust Signal Engine","engine_version":"0.1","mode":mode,"url":url,"business_name":name,"pages_assessed":len(page_data),
             "pages_discovered":len(pages),"overall_score":score,"grade":"Leading" if score>=80 else "Strong" if score>=60 else "Developing" if score>=40 else "Needs Attention",
             "strongest_signal":strongest["label"],"weakest_signal":weakest["label"],"signals":signals,"priority_improvements":priorities,
+            "diagnostic_synthesis":synthesis,
             "commercial_recommendation": _commercial_recommendation(score, signals),
             "limitations":["Basic mode assesses the homepage only." ] if mode=="basic" else ["Deep mode expands the crawl and evidence collection but does not guarantee complete external verification." ]}

@@ -254,8 +254,8 @@ async def assess(url, business_name=None, mode="basic"):
         "HTTPS is used":("The site is not consistently secured with HTTPS.","An insecure connection can undermine user confidence and technical trust.","Move all customer-facing pages and resources to HTTPS."),
         "Meta description is present":("A clear meta description is missing from the assessed page.","The page has less controlled explanatory context available to systems and users in search-style previews.","Add a concise, accurate description aligned with the page's purpose."),
         "Viewport is present":("Mobile viewport configuration is missing.","The page may provide weaker mobile presentation and accessibility signals.","Implement an appropriate responsive viewport configuration."),
-        "Canonical URL is present":("A canonical URL is not clearly declared.","URL versioning can become less explicit when multiple address variants exist.","Add an appropriate canonical URL and keep URL signals consistent."),
-        "Structured data is machine-readable":("Machine-readable structured data is limited or absent.","Important first-party information may rely more heavily on interpretation of page text.","Add appropriate structured data that reflects the visible business information."),
+        "Canonical URL is present":("Some pages do not clearly indicate which version should be treated as the main page.","When similar or alternative versions of a page exist, this can create uncertainty about which version represents the intended source.","Make the preferred version of important pages clear and keep those signals consistent."),
+        "Structured data is machine-readable":("The website provides limited structured information that clearly describes important business details.","Some of the information you want understood may therefore have to be inferred from the page rather than being explicitly defined.","Add appropriate structured information that accurately reinforces what the visible website says."),
         "Robots/sitemap references are discoverable":("Robots or sitemap references are not clearly discoverable.","Technical discovery and site understanding may be less explicit than they could be.","Ensure robots and sitemap references are correctly exposed and aligned with the live site."),
         "Heading structure begins with a clear H1":("A clear primary heading is missing.","The page's primary subject is less explicit in its visible structure.","Introduce one clear, descriptive H1 aligned with the page purpose."),
       },
@@ -279,11 +279,22 @@ async def assess(url, business_name=None, mode="basic"):
             if item:
                 meaning,impact,action=item
                 sig["diagnostic_context"].append({"finding":gap,"meaning":meaning,"business_impact":impact,"recommended_action":action})
+        probe_questions={
+            "Entity Clarity":"If someone discovered your business without knowing anything about you, would they immediately understand who you are, what you do and who you serve?",
+            "Knowledge Completeness":"If a prospective customer were comparing you with another provider, would your website answer the questions they need answered before feeling ready to enquire?",
+            "Trust Evidence":"You may have evidence of satisfied customers, but would a prospective customer see enough of it at the point they are deciding whether to trust you?",
+            "Technical Accessibility":"Your website may look perfectly normal to a person, but is the information behind the pages clear enough for the systems interpreting it?",
+            "Narrative Consistency":"If someone looked at several different parts of your website, would they come away with exactly the same understanding of your business?",
+            "External Validation":"If someone wanted to verify what your business says about itself, would they find enough independent evidence to reinforce that picture?"
+        }
+        probe=probe_questions.get(sig["label"])
+        for item in sig["diagnostic_context"]:
+            item["question"]=probe
         if not sig["diagnostic_context"]:
             sig["diagnostic_context"].append({"finding":"No major automated gap identified.","meaning":"The assessed evidence supports this Trust Signal.","business_impact":"This is a relative strength to preserve and reinforce.","recommended_action":"Maintain the signal and strengthen it with additional evidence as the site evolves."})
     score=round(sum(x["score"] for x in signals)/len(signals))
     strongest=max(signals,key=lambda x:x["score"]); weakest=min(signals,key=lambda x:x["score"])
-    priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended."),"evidence":(x["evidence"][:2] if x.get("evidence") else [])} for x in signals],key=lambda x:x["score"])[:4]
+    priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended."),"evidence":(x["evidence"][:2] if x.get("evidence") else [])} for x in signals if x.get("gaps") and x["score"]<80],key=lambda x:x["score"])[:4]
     return {"success":True,"engine":"RbAI Trust Signal Engine","engine_version":"0.1","mode":mode,"url":url,"business_name":name,"pages_assessed":len(page_data),
             "pages_discovered":len(pages),"overall_score":score,"grade":"Leading" if score>=80 else "Strong" if score>=60 else "Developing" if score>=40 else "Needs Attention",
             "strongest_signal":strongest["label"],"weakest_signal":weakest["label"],"signals":signals,"priority_improvements":priorities,

@@ -291,7 +291,7 @@ async def assess(url, business_name=None, mode="basic"):
         for item in sig["diagnostic_context"]:
             item["question"]=probe
         if not sig["diagnostic_context"]:
-            sig["diagnostic_context"].append({"finding":"No major automated gap identified.","meaning":"The assessed evidence supports this Trust Signal.","business_impact":"This is a relative strength to preserve and reinforce.","recommended_action":"Maintain the signal and strengthen it with additional evidence as the site evolves."})
+            sig["diagnostic_context"].append({"finding":"No major automated gap identified.","question":probe,"meaning":"The assessed evidence supports this Trust Signal.","business_impact":"This is a relative strength to preserve and reinforce.","recommended_action":"Maintain the signal and strengthen it with additional evidence as the site evolves."})
     score=round(sum(x["score"] for x in signals)/len(signals))
     strongest=max(signals,key=lambda x:x["score"]); weakest=min(signals,key=lambda x:x["score"])
     priorities=sorted([{"signal":x["label"],"score":x["score"],"issue":(x["gaps"][0] if x.get("gaps") else "Further evidence review is recommended."),"evidence":(x["evidence"][:2] if x.get("evidence") else [])} for x in signals if x.get("gaps") and x["score"]<80],key=lambda x:x["score"])[:4]

@@ -38,7 +38,7 @@ def _tokens(s):
     return set(re.findall(r"[a-z0-9]{3,}", (s or "").lower()))
 
 _LEGAL_NAME_SUFFIXES = {"ltd", "limited", "llp", "plc", "inc", "incorporated", "corp", "corporation", "company", "co"}
-_GENERIC_IDENTITY_DESCRIPTORS = {"service", "services", "solutions"}
+_GENERIC_IDENTITY_DESCRIPTORS = {"the", "service", "services", "solutions"}
 
 def _identity_tokens(value):
     """Return meaningful identity tokens, excluding legal suffixes and generic service descriptors."""

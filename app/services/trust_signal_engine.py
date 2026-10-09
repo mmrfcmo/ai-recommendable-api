@@ -106,6 +106,14 @@ def _narrative_checks(title, h1, structured_name):
         ),
     ]
 
+_BUSINESS_SCHEMA_TYPES = {
+    "organization", "localbusiness", "professionalservice", "corporation",
+    "dentist", "medicalbusiness", "physician", "hospital", "medicalclinic",
+    "homeandconstructionbusiness", "generalcontractor", "roofingcontractor",
+    "plumber", "electrician", "hvacbusiness", "automotivebusiness",
+    "store", "legalservice", "accountingservice", "financialservice",
+}
+
 def _jsonld(soup):
     out=[]
     for tag in soup.find_all("script",type="application/ld+json"):
@@ -191,7 +199,7 @@ async def assess(url, business_name=None, mode="basic"):
     for j in first["jsonld"]:
         jtype=j.get("@type")
         types=jtype if isinstance(jtype,list) else [jtype]
-        if any(str(t).lower() in {"organization","localbusiness","professionalservice","corporation"} for t in types):
+        if any(str(t).lower() in _BUSINESS_SCHEMA_TYPES for t in types):
             candidate=_clean(str(j.get("name","")))
             if candidate:
                 structured_name=candidate

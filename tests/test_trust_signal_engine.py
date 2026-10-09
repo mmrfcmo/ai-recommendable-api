@@ -229,6 +229,30 @@ class TrustSignalEngineTests(unittest.TestCase):
             [s["name"] for s in basic["signals"]],
             [s["name"] for s in deep["signals"]],
         )
+        self.assertEqual(
+            set(basic.keys()),
+            {
+                "success", "engine", "engine_version", "mode", "url",
+                "business_name", "pages_assessed", "pages_discovered",
+                "overall_score", "grade", "strongest_signal", "weakest_signal",
+                "signals", "priority_improvements", "commercial_recommendation",
+                "limitations",
+            },
+        )
+        self.assertEqual(
+            set(basic["commercial_recommendation"].keys()),
+            {
+                "recommended_treatment", "indicative_price", "reason",
+                "priority_signals", "disclaimer",
+            },
+        )
+        self.assertEqual(
+            set(basic["signals"][0].keys()),
+            {
+                "name", "label", "score", "max_score", "percentage",
+                "evidence", "limitations", "gaps",
+            },
+        )
 
     def test_redirect_resolved_url_is_returned(self):
         class Response:

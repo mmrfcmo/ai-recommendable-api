@@ -55,22 +55,46 @@ def _narrative_checks(title, h1, structured_name):
     """Score visible and structured identity agreement without penalising service-word variation."""
     present = bool(_clean(title) and _clean(h1))
     visible_agreement = present and _identity_agrees(title, h1)
+
     structured_tokens = _identity_tokens(structured_name)
     visible_tokens = _identity_tokens(title) | _identity_tokens(h1)
+
+    # Award points only for checks that pass.
+    presence_points = 20 if present else 0
+    identity_points = 20 if visible_agreement else 0
+
     if not visible_agreement:
         structured_points = 0
     elif not structured_tokens:
+        # Preserve the existing 60-point score when visible identity agrees
+        # but no structured business name is available.
         structured_points = 20
-    elif structured_tokens == visible_tokens or len(structured_tokens & visible_tokens) >= 2:
+    elif (
+        structured_tokens == visible_tokens
+        or len(structured_tokens & visible_tokens) >= 2
+    ):
         structured_points = 60
     elif structured_tokens & visible_tokens:
         structured_points = 20
     else:
         structured_points = 0
+
     return [
-        ("Page title and main heading are present", present, 20),
-        ("Page title and main heading express the same business identity", visible_agreement, 20),
-        ("Structured business identity aligns with visible identity", structured_points == 60, structured_points),
+        (
+            "Page title and main heading are present",
+            present,
+            presence_points,
+        ),
+        (
+            "Page title and main heading express the same business identity",
+            visible_agreement,
+            identity_points,
+        ),
+        (
+            "Structured business identity aligns with visible identity",
+            structured_points == 60,
+            structured_points,
+        ),
     ]
 
 def _jsonld(soup):

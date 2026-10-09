@@ -37,6 +37,42 @@ def _clean(s): return re.sub(r"\s+"," ",s or "").strip()
 def _tokens(s):
     return set(re.findall(r"[a-z0-9]{3,}", (s or "").lower()))
 
+_LEGAL_NAME_SUFFIXES = {"ltd", "limited", "llp", "plc", "inc", "incorporated", "corp", "corporation", "company", "co"}
+
+def _identity_tokens(value):
+    """Return meaningful identity tokens, excluding common legal suffixes."""
+    return _tokens(value) - _LEGAL_NAME_SUFFIXES
+
+def _identity_agrees(left, right):
+    """Avoid treating a single shared word as sufficient identity evidence."""
+    left_clean = re.sub(r"[^a-z0-9]+", "", (left or "").lower())
+    right_clean = re.sub(r"[^a-z0-9]+", "", (right or "").lower())
+    if left_clean and left_clean == right_clean:
+        return True
+    return len(_identity_tokens(left) & _identity_tokens(right)) >= 2
+
+def _narrative_checks(title, h1, structured_name):
+    """Score visible and structured identity agreement without penalising service-word variation."""
+    present = bool(_clean(title) and _clean(h1))
+    visible_agreement = present and _identity_agrees(title, h1)
+    structured_tokens = _identity_tokens(structured_name)
+    visible_tokens = _identity_tokens(title) | _identity_tokens(h1)
+    if not visible_agreement:
+        structured_points = 0
+    elif not structured_tokens:
+        structured_points = 20
+    elif structured_tokens == visible_tokens or len(structured_tokens & visible_tokens) >= 2:
+        structured_points = 60
+    elif structured_tokens & visible_tokens:
+        structured_points = 20
+    else:
+        structured_points = 0
+    return [
+        ("Page title and main heading are present", present, 20),
+        ("Page title and main heading express the same business identity", visible_agreement, 20),
+        ("Structured business identity aligns with visible identity", structured_points == 60, structured_points),
+    ]
+
 def _jsonld(soup):
     out=[]
     for tag in soup.find_all("script",type="application/ld+json"):
@@ -118,17 +154,19 @@ async def assess(url, business_name=None, mode="basic"):
 
     texts=[p["text"] for p in page_data]; all_text=" ".join(texts).lower()
     first=page_data[0]; soup=first["soup"]
+    structured_name=""
+    for j in first["jsonld"]:
+        jtype=j.get("@type")
+        types=jtype if isinstance(jtype,list) else [jtype]
+        if any(str(t).lower() in {"organization","localbusiness","professionalservice","corporation"} for t in types):
+            candidate=_clean(str(j.get("name","")))
+            if candidate:
+                structured_name=candidate
+                break
     name=business_name.strip() if business_name else ""
     if not name:
-        # Prefer explicit Organization/LocalBusiness names from structured data.
-        for j in first["jsonld"]:
-            jtype=j.get("@type")
-            types=jtype if isinstance(jtype,list) else [jtype]
-            if any(str(t).lower() in {"organization","localbusiness","professionalservice","corporation"} for t in types):
-                candidate=_clean(str(j.get("name","")))
-                if candidate:
-                    name=candidate
-                    break
+        # Preserve current inferred business-name behaviour while keeping schema evidence independent.
+        name=structured_name
     if not name:
         name=(first["title"].split("|")[0].split("-")[0].strip() or parsed.netloc.split(".")[0]).strip()
     name_tokens=_tokens(name)
@@ -168,9 +206,8 @@ async def assess(url, business_name=None, mode="basic"):
       ("Case studies/results/outcomes are present",bool(re.search(r"case stud|results|success stor|outcomes|before and after",all_text))),
       ("Credentials/accreditations/awards are stated",bool(re.search(r"accredit|certif|award|member of|professional body",all_text))),
       ("Specific proof or client evidence is present",bool(re.search(r"clients include|trusted by|worked with|portfolio|projects",all_text))),
-      ("Contact and business details support accountability",bool(re.search(r"contact|telephone|email|address|registered",all_text))),
     ]
-    tr_score=_score([(ok,20) for _,ok in tr_e],100)
+    tr_score=_score([(ok,25) for _,ok in tr_e],100)
     tr_gaps=[x for x,ok in tr_e if not ok]
 
     # Technical Accessibility
@@ -183,28 +220,15 @@ async def assess(url, business_name=None, mode="basic"):
       ("Viewport is present",bool(soup.find("meta",attrs={"name":re.compile("^viewport$",re.I)}))),
       ("Canonical URL is present",bool(soup.find("link",rel=lambda x:x and "canonical" in x))),
       ("Structured data is machine-readable",bool(first["jsonld"])),
-      ("Robots/sitemap references are discoverable",bool(re.search(r"robots|sitemap",all_text+" "+" ".join(links),re.I))),
-      ("Heading structure begins with a clear H1",bool(first["h1"])),
     ]
-    ta_weights=[15,15,15,15,15,15,10]
+    ta_weights=[20,20,20,20,20]
     ta_score=_score([(ok,w) for (_,ok),w in zip(ta_e,ta_weights)],100)
     ta_gaps=[x for x,ok in ta_e if not ok]
 
-    # Narrative Consistency: compare titles/H1 and repeated identity/service language across pages.
-    titles=[p["title"] for p in page_data if p["title"]]; h1s=[x for p in page_data for x in p["h1"]]
-    nc_e=[
-      ("Assessed pages have page titles",len(titles)>=max(1,len(page_data)//2)),
-      ("Assessed pages have clear H1s",len(h1s)>=max(1,len(page_data)//2)),
-      ("Business identity is repeated consistently",identity_mentions>=max(1,len(page_data)//2)),
-      ("Core service language repeats across pages",
-       (len(page_data)==1 and bool(re.search(r"\b(?:services?|solutions?|consulting|specialist|professional)\b",all_text)))
-       or (len(page_data)>1 and any(
-           sum(bool(re.search(r"\b"+term+r"\b",p["text"].lower())) for p in page_data)>=2
-           for term in ("service","services","solution","solutions","consulting","specialist","professional")
-       ))),
-      ("No obvious conflicting identity terms found",not bool(re.search(r"welcome to|we are [^.]{0,80}\b(?:different|formerly|previously)\b",all_text))),
-    ]
-    nc_score=_score([(ok,20) for _,ok in nc_e],100)
+    # Narrative Consistency: compare visible identity with the structured business identity.
+    nc_checks=_narrative_checks(first["title"], first["h1"][0] if first["h1"] else "", structured_name)
+    nc_e=[(label,ok) for label,ok,_points in nc_checks]
+    nc_score=min(100, sum(points for _label,_ok,points in nc_checks))
     nc_gaps=[x for x,ok in nc_e if not ok]
 
     # External Validation is deliberately evidence-aware, not fabricated.
@@ -248,7 +272,6 @@ async def assess(url, business_name=None, mode="basic"):
         "Case studies/results/outcomes are present":("Specific outcomes or case evidence are not sufficiently demonstrated.","Claims are harder to evaluate when prospects cannot see concrete examples of results or outcomes.","Add concise case studies, examples, outcomes and before/after evidence where appropriate."),
         "Credentials/accreditations/awards are stated":("Credentials or recognised qualifications are not sufficiently evidenced.","The business may be credible in reality but the site does not make that credibility easy to verify.","Present relevant qualifications, accreditations, memberships and awards with context."),
         "Specific proof or client evidence is present":("Specific client or project evidence is limited.","Generic claims provide less confidence than identifiable examples of work, clients or projects.","Strengthen proof with appropriate client, project, portfolio or outcome evidence."),
-        "Contact and business details support accountability":("Accountability details are not sufficiently visible.","Reduced transparency can make it harder for prospects to assess who stands behind the business.","Strengthen contact, business and accountability information."),
       },
       "Technical Accessibility":{
         "HTTPS is used":("Some parts of the website may not be consistently using a secure connection.","If a page or resource is not securely delivered, this can create avoidable uncertainty for people using the site.","Make sure every customer-facing page and resource is securely delivered over HTTPS."),
@@ -256,15 +279,11 @@ async def assess(url, business_name=None, mode="basic"):
         "Viewport is present":("The page is not clearly telling mobile devices how the content should fit the screen.","That can make the experience less predictable on phones and other smaller screens.","Make sure the site is configured to present its pages properly across different screen sizes."),
         "Canonical URL is present":("Some pages do not clearly tell systems which version of a page should be treated as the main one.","When similar or alternative versions exist, this can create uncertainty about which page represents the intended source.","Make the preferred version of important pages clear and keep those signals consistent."),
         "Structured data is machine-readable":("Some important business information is not clearly defined in a format designed to be read consistently by systems.","This means some details may have to be worked out from the page rather than being explicitly stated.","Add appropriate structured information that reinforces the important facts already shown on the website."),
-        "Robots/sitemap references are discoverable":("The website does not clearly expose the basic signposts that help systems find and understand its pages.","That can make the site structure less explicit than it could be.","Make sure the site has clear, working routes for its page map and access instructions, and keep them aligned with the live site."),
-        "Heading structure begins with a clear H1":("The page does not clearly state its main subject in one prominent heading.","A visitor or system has less immediate context about what the page is primarily about.","Give the page one clear main heading that accurately reflects its purpose."),
       },
       "Narrative Consistency":{
-        "Assessed pages have page titles":("Page titles are not consistently present.","The site's page-level narrative is less explicit and consistent.","Standardise meaningful page titles around service, audience and purpose."),
-        "Assessed pages have clear H1s":("Primary headings are not consistently clear across assessed pages.","Visitors and systems may receive inconsistent cues about each page's purpose.","Strengthen H1 structure and align it with each page's actual purpose."),
-        "Business identity is repeated consistently":("Business identity is not consistently reinforced across pages.","Different or incomplete identity cues can weaken the coherence of the overall business representation.","Create consistent organisation and brand references across key pages."),
-        "Core service language repeats across pages":("Core service language is not consistently reinforced across the assessed pages.","The site's narrative may not build a strong, repeated understanding of what the business is known for.","Align service terminology across core pages and supporting content."),
-        "No obvious conflicting identity terms found":("Potentially conflicting identity language was detected.","Conflicting descriptions can create ambiguity about the organisation, offer or positioning.","Review conflicting terminology and establish one consistent core narrative."),
+        "Page title and main heading are present":("The page is missing a clear title or main heading.","Visitors and systems may have less immediate context about the page's subject.","Ensure the page has a meaningful title and a clear main heading."),
+        "Page title and main heading express the same business identity":("The page title and main heading do not clearly reinforce the same identity.","Conflicting visible identity cues can make the business harder to interpret consistently.","Align the page title and main heading around the correct business identity."),
+        "Structured business identity aligns with visible identity":("Structured business identity is missing or does not fully align with the visible identity.","Systems may receive incomplete or conflicting cues about which business the page represents.","Check structured Organization or LocalBusiness naming against the business identity shown to visitors."),
       },
       "External Validation":{
         "Website exposes links/references to external profiles or authorities":("Relevant external profiles or authority references are not clearly connected from the site.","First-party claims have fewer visible connections to external validation sources.","Connect appropriate external profiles, professional bodies or authoritative references where genuinely relevant."),
@@ -277,7 +296,7 @@ async def assess(url, business_name=None, mode="basic"):
       "Knowledge Completeness":{"strong":"The website provides substantial information about what the business offers, who it serves and the questions a prospective customer may have. The core proposition is supported by useful detail rather than relying only on short service descriptions.","intro":"The website explains the core offer, but some of the information a prospective customer may need before making a decision is less fully developed."},
       "Trust Evidence":{"strong":"The website provides several forms of evidence that support the business's claims, including customer, project or credibility evidence. This gives a prospective customer more than the business's own claims to consider.","intro":"The website contains some evidence that supports the business's claims, but the proof is not equally strong across the areas we assessed."},
       "Technical Accessibility":{"strong":"The core technical foundations we checked are largely in place. The website is accessible to people and contains the main structural signals that help systems interpret its pages.","intro":"The core technical foundations are mostly in place, but some of the signals that help systems access, distinguish and interpret the site's pages could be clearer."},
-      "Narrative Consistency":{"strong":"The assessed pages tell a consistent story about the business. The identity, page purposes and core service language reinforce rather than contradict one another.","intro":"The main story is reasonably consistent, but some pages or elements do not reinforce the same understanding as clearly as they could."},
+      "Narrative Consistency":{"strong":"The visible page title, main heading and structured business identity reinforce the same business identity. Service wording can vary where it accurately describes different offers.","intro":"The page title, main heading or structured business identity does not fully reinforce the same business identity, so the site's representation may be less coherent than it could be."},
       "External Validation":{"strong":"The website is supported by visible references to evidence outside the site, giving a prospective customer additional ways to validate what the business says about itself.","intro":"The website contains some signs of external validation, but the wider evidence supporting the business is not connected or reinforced as clearly as it could be."}
     }
     for sig in signals:

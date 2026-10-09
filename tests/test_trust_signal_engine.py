@@ -426,6 +426,50 @@ class TrustSignalEngineTests(unittest.TestCase):
                 self.assertTrue(result["success"])
                 self.assertEqual(result["business_name"], "Example Business Ltd")
 
+    def test_jsonld_business_name_inference_supports_schema_org_type_urls(self):
+        html = (
+            '<html><head><title>Fallback Title</title>'
+            '<script type="application/ld+json">'
+            '{"@type":"https://schema.org/RoofingContractor",'
+            '"name":"Example Roofing Ltd"}'
+            '</script></head><body><h1>Example Roofing</h1>'
+            '<p>Roofing services and contact us.</p></body></html>'
+        )
+
+        class Response:
+            url = "https://example.com/"
+            text = html
+            status_code = 200
+
+            def raise_for_status(self):
+                return None
+
+        class Client:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                return None
+
+            async def get(self, url):
+                return Response()
+
+        async def run():
+            with patch.object(
+                trust_signal_engine.httpx, "AsyncClient", Client
+            ):
+                return await trust_signal_engine.assess(
+                    "https://example.com/", mode="basic"
+                )
+
+        import asyncio
+        result = asyncio.run(run())
+        self.assertTrue(result["success"])
+        self.assertEqual(result["business_name"], "Example Roofing Ltd")
+
     def test_external_profile_evidence_is_detected(self):
         html = (
             '<html><head><title>Example</title></head><body>'

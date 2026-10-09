@@ -138,6 +138,22 @@ class TrustSignalEngineTests(unittest.TestCase):
         )
         self.assertEqual(sum(points for _, _, points in checks), 40)
 
+    def test_narrative_consistency_rejects_extra_conflicting_identity_tokens(self):
+        checks = _narrative_checks(
+            "Acme Roofing Ltd",
+            "Acme Roofing",
+            "Acme Roofing Plumbing Ltd",
+        )
+        self.assertEqual([points for _, _, points in checks], [20, 20, 20])
+
+    def test_visible_identity_allows_generic_service_word_variation(self):
+        checks = _narrative_checks(
+            "Acme Roofing Services Ltd",
+            "Acme Roofing",
+            "Acme Roofing Ltd",
+        )
+        self.assertEqual([points for _, _, points in checks], [20, 20, 60])
+
     def test_narrative_consistency_conflicting_visible_identity(self):
         checks = _narrative_checks(
             "Acme Roofing", "Different Plumbing", ""

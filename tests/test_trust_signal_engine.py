@@ -250,7 +250,8 @@ class TrustSignalEngineTests(unittest.TestCase):
             set(basic["signals"][0].keys()),
             {
                 "name", "label", "score", "max_score", "percentage",
-                "evidence", "limitations", "gaps",
+                "evidence", "limitations", "gaps", "diagnostic_context",
+                "diagnostic_status", "diagnostic_summary",
             },
         )
 

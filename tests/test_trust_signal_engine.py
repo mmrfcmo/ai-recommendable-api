@@ -469,6 +469,13 @@ class TrustSignalEngineTests(unittest.TestCase):
         result = asyncio.run(run())
         self.assertTrue(result["success"])
         self.assertEqual(result["business_name"], "Example Roofing Ltd")
+        entity = next(
+            s for s in result["signals"] if s["name"] == "entity_clarity"
+        )
+        self.assertIn(
+            "Organisation or LocalBusiness structured identity is present",
+            entity["evidence"],
+        )
 
     def test_external_profile_evidence_is_detected(self):
         html = (

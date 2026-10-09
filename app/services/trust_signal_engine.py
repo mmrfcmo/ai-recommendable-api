@@ -199,7 +199,7 @@ async def assess(url, business_name=None, mode="basic"):
     for j in first["jsonld"]:
         jtype=j.get("@type")
         types=jtype if isinstance(jtype,list) else [jtype]
-        if any(str(t).lower() in _BUSINESS_SCHEMA_TYPES for t in types):
+        if any(str(t).rstrip("/").rsplit("/", 1)[-1].rsplit("#", 1)[-1].lower() in _BUSINESS_SCHEMA_TYPES for t in types):
             candidate=_clean(str(j.get("name","")))
             if candidate:
                 structured_name=candidate

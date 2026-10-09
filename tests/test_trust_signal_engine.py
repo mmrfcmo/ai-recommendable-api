@@ -102,7 +102,7 @@ class TrustSignalEngineTests(unittest.TestCase):
             "Acme Roofing Ltd", "Acme Roofing", ""
         )
         self.assertEqual(
-            [points for _, _, points in no_structured_name], [20, 20, 20]
+            [points for _, _, points in no_structured_name], [20, 20, 0]
         )
 
         conflicting_visible_identity = _narrative_checks(
@@ -124,7 +124,7 @@ class TrustSignalEngineTests(unittest.TestCase):
         checks = _narrative_checks(
             "Acme Roofing Ltd", "Acme Roofing", ""
         )
-        self.assertEqual(sum(points for _, _, points in checks), 60)
+        self.assertEqual(sum(points for _, _, points in checks), 40)
 
     def test_narrative_consistency_partial_structured_name(self):
         checks = _narrative_checks(

@@ -223,7 +223,21 @@ async def assess(url, business_name=None, mode="basic"):
     ent_e += [("Business identity appears consistently across assessed pages", identity_mentions>=max(1,len(page_data)//2),)]
     ent_e += [("Clear H1 and page title are present", bool(first["h1"]) and bool(first["title"]),)]
     ent_e += [("About/company/purpose language is present", bool(re.search(r"about us|about the|our company|we are|who we are|our story|founded|established",all_text)),)]
-    ent_e += [("Organisation or LocalBusiness structured identity is present", bool(re.search(r"organization|localbusiness|professionalservice|corporation",schema_text)),)]
+    ent_e += [(
+        "Organisation or LocalBusiness structured identity is present",
+        any(
+            str(t).rstrip("/").rsplit("/", 1)[-1].rsplit("#", 1)[-1].lower()
+            in _BUSINESS_SCHEMA_TYPES
+            for p in page_data
+            for j in p["jsonld"]
+            for t in (
+                j.get("@type")
+                if isinstance(j.get("@type"), list)
+                else [j.get("@type")]
+            )
+            if t
+        ),
+    )]
     ent_e += [("Contact/location information is discoverable", bool(re.search(r"contact us|telephone|phone|address|postcode|postal code|located in|based in",all_text)),)]
     ent_score=_score([(ok,20) for _,ok in ent_e],100)
     ent_gaps=[x for x,ok in ent_e if not ok]

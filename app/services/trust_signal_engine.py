@@ -45,10 +45,21 @@ def _identity_tokens(value):
     return _tokens(value) - _LEGAL_NAME_SUFFIXES - _GENERIC_IDENTITY_DESCRIPTORS
 
 def _identity_agrees(left, right):
-    """Require the distinctive identity tokens to agree, not merely overlap."""
-    left_tokens = _identity_tokens(left)
+    """Match distinctive identity tokens, allowing common title separators."""
     right_tokens = _identity_tokens(right)
-    return bool(left_tokens and right_tokens and left_tokens == right_tokens)
+    if not right_tokens:
+        return False
+
+    # SEO titles often append extra context after a separator, e.g.
+    # "Acme Roofing | Trusted Roofers in London". Compare title segments
+    # independently so descriptive suffixes do not create a false mismatch.
+    left_segments = re.split(r"\s*[|:–—]\s*", left or "")
+    left_segments.append(left or "")
+    return any(
+        _identity_tokens(segment) == right_tokens
+        for segment in left_segments
+        if _identity_tokens(segment)
+    )
 
 def _narrative_checks(title, h1, structured_name):
     """Score visible and structured identity agreement without penalising service-word variation."""

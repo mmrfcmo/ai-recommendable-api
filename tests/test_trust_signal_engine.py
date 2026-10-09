@@ -178,7 +178,7 @@ class TrustSignalEngineTests(unittest.TestCase):
 
     def test_visible_identity_does_not_split_hyphenated_business_names(self):
         checks = _narrative_checks(
-            "A-One Roofing", "One Roofing", "A-One Roofing Ltd"
+            "North-Star Roofing", "Star Roofing", "North-Star Roofing Ltd"
         )
         self.assertEqual([points for _, _, points in checks], [20, 0, 0])
 

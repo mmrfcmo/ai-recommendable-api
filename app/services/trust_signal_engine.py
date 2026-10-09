@@ -212,11 +212,6 @@ async def assess(url, business_name=None, mode="basic"):
         name=(first["title"].split("|")[0].split("-")[0].strip() or parsed.netloc.split(".")[0]).strip()
     name_tokens=_tokens(name)
     identity_mentions=sum(1 for p in page_data if name_tokens and len(name_tokens & _tokens(p["text"]))>=max(1,min(2,len(name_tokens))))
-    schema_types=[]
-    for p in page_data:
-        for j in p["jsonld"]:
-            t=j.get("@type"); schema_types.extend(t if isinstance(t,list) else [t] if t else [])
-    schema_text=" ".join(str(x) for x in schema_types).lower()
 
     # Entity Clarity: identity, purpose, contact/location, structured identity, cross-page consistency.
     ent_e=[]

@@ -53,7 +53,7 @@ def _identity_agrees(left, right):
     # SEO titles often append extra context after a separator, e.g.
     # "Acme Roofing | Trusted Roofers in London". Compare title segments
     # independently so descriptive suffixes do not create a false mismatch.
-    left_segments = re.split(r"\s*[|:–—-]\s*", left or "")
+    left_segments = re.split(r"\s*(?:[|:–—]|\s+-\s+)\s*", left or "")
     left_segments.append(left or "")
     return any(
         _identity_tokens(segment) == right_tokens

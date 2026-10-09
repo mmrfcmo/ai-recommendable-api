@@ -38,18 +38,17 @@ def _tokens(s):
     return set(re.findall(r"[a-z0-9]{3,}", (s or "").lower()))
 
 _LEGAL_NAME_SUFFIXES = {"ltd", "limited", "llp", "plc", "inc", "incorporated", "corp", "corporation", "company", "co"}
+_GENERIC_IDENTITY_DESCRIPTORS = {"service", "services", "solutions"}
 
 def _identity_tokens(value):
-    """Return meaningful identity tokens, excluding common legal suffixes."""
-    return _tokens(value) - _LEGAL_NAME_SUFFIXES
+    """Return meaningful identity tokens, excluding legal suffixes and generic service descriptors."""
+    return _tokens(value) - _LEGAL_NAME_SUFFIXES - _GENERIC_IDENTITY_DESCRIPTORS
 
 def _identity_agrees(left, right):
-    """Avoid treating a single shared word as sufficient identity evidence."""
-    left_clean = re.sub(r"[^a-z0-9]+", "", (left or "").lower())
-    right_clean = re.sub(r"[^a-z0-9]+", "", (right or "").lower())
-    if left_clean and left_clean == right_clean:
-        return True
-    return len(_identity_tokens(left) & _identity_tokens(right)) >= 2
+    """Require the distinctive identity tokens to agree, not merely overlap."""
+    left_tokens = _identity_tokens(left)
+    right_tokens = _identity_tokens(right)
+    return bool(left_tokens and right_tokens and left_tokens == right_tokens)
 
 def _narrative_checks(title, h1, structured_name):
     """Score visible and structured identity agreement without penalising service-word variation."""
@@ -69,10 +68,9 @@ def _narrative_checks(title, h1, structured_name):
         # Preserve the existing 60-point score when visible identity agrees
         # but no structured business name is available.
         structured_points = 20
-    elif (
-        structured_tokens == visible_tokens
-        or len(structured_tokens & visible_tokens) >= 2
-    ):
+    elif structured_tokens and structured_tokens <= visible_tokens:
+        # Structured identity may be shorter than the visible title/heading,
+        # but extra unmatched structured-name tokens are treated conservatively.
         structured_points = 60
     elif structured_tokens & visible_tokens:
         structured_points = 20

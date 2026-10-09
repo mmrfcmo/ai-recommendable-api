@@ -154,6 +154,14 @@ class TrustSignalEngineTests(unittest.TestCase):
         )
         self.assertEqual([points for _, _, points in checks], [20, 20, 60])
 
+    def test_visible_identity_allows_separated_seo_title_suffix(self):
+        checks = _narrative_checks(
+            "Acme Roofing | Trusted Roofers in London",
+            "Acme Roofing",
+            "Acme Roofing Ltd",
+        )
+        self.assertEqual([points for _, _, points in checks], [20, 20, 60])
+
     def test_narrative_consistency_conflicting_visible_identity(self):
         checks = _narrative_checks(
             "Acme Roofing", "Different Plumbing", ""

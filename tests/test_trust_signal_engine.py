@@ -54,6 +54,35 @@ class TrustSignalEngineTests(unittest.TestCase):
         )
         self.assertEqual(sum(points for _, _, points in checks), 100)
 
+    def test_narrative_check_points_match_each_evidence_outcome(self):
+        aligned = _narrative_checks(
+            "Acme Roofing Ltd", "Acme Roofing", "Acme Roofing Ltd"
+        )
+        self.assertEqual([points for _, _, points in aligned], [20, 20, 60])
+        self.assertEqual([passed for _, passed, _ in aligned], [True, True, True])
+
+        no_structured_name = _narrative_checks(
+            "Acme Roofing Ltd", "Acme Roofing", ""
+        )
+        self.assertEqual(
+            [points for _, _, points in no_structured_name], [20, 20, 20]
+        )
+
+        conflicting_visible_identity = _narrative_checks(
+            "Acme Roofing", "Different Plumbing", "Acme Roofing"
+        )
+        self.assertEqual(
+            [points for _, _, points in conflicting_visible_identity],
+            [20, 0, 0],
+        )
+
+        missing_visible_identity = _narrative_checks(
+            "", "Acme Roofing", "Acme Roofing Ltd"
+        )
+        self.assertEqual(
+            [points for _, _, points in missing_visible_identity], [0, 0, 0]
+        )
+
     def test_narrative_consistency_without_structured_name(self):
         checks = _narrative_checks(
             "Acme Roofing Ltd", "Acme Roofing", ""

@@ -76,9 +76,8 @@ def _narrative_checks(title, h1, structured_name):
     if not visible_agreement:
         structured_points = 0
     elif not structured_tokens:
-        # Preserve the existing 60-point score when visible identity agrees
-        # but no structured business name is available.
-        structured_points = 20
+        # Missing structured identity is an evidence gap, not positive evidence.
+        structured_points = 0
     elif structured_tokens and structured_tokens <= visible_tokens:
         # Structured identity may be shorter than the visible title/heading,
         # but extra unmatched structured-name tokens are treated conservatively.

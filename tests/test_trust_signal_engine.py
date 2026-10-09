@@ -10,6 +10,7 @@ from app.services.trust_signal_engine import (
     _url,
     _tokens,
     _narrative_checks,
+    _commercial_recommendation,
 )
 
 
@@ -26,6 +27,42 @@ class TrustSignalEngineTests(unittest.TestCase):
                 "narrative_consistency",
                 "external_validation",
             ],
+        )
+
+    def test_commercial_recommendation_thresholds_remain_unchanged(self):
+        signals = [
+            {"score": 20, "label": "Entity Clarity"},
+            {"score": 30, "label": "Trust Evidence"},
+            {"score": 60, "label": "External Validation"},
+        ]
+
+        self.assertEqual(
+            _commercial_recommendation(49, signals)["recommended_treatment"],
+            "Trust Transformation",
+        )
+        self.assertEqual(
+            _commercial_recommendation(49, signals)["indicative_price"],
+            "£995",
+        )
+        self.assertEqual(
+            _commercial_recommendation(50, signals)["recommended_treatment"],
+            "AI Trust Optimisation",
+        )
+        self.assertEqual(
+            _commercial_recommendation(50, signals)["indicative_price"],
+            "£1,249",
+        )
+        self.assertEqual(
+            _commercial_recommendation(69, signals)["recommended_treatment"],
+            "AI Trust Optimisation",
+        )
+        self.assertEqual(
+            _commercial_recommendation(70, signals)["recommended_treatment"],
+            "Advanced Visibility",
+        )
+        self.assertEqual(
+            _commercial_recommendation(70, signals)["indicative_price"],
+            "£1,995",
         )
 
     def test_signal_score_never_exceeds_maximum(self):

@@ -366,6 +366,19 @@ async def assess(url, business_name=None, mode="basic"):
         probe=probe_questions.get(sig["label"])
         for item in sig["diagnostic_context"]:
             item["question"]=probe
+            # Potential outcomes describe plausible benefits, not guaranteed results.
+            outcome_by_signal = {
+                "Entity Clarity": "A clearer, more consistent business identity could help prospective customers understand who they are dealing with and make it easier to verify the business before making contact.",
+                "Knowledge Completeness": "Clearer service information could help prospective customers decide whether the offer fits their needs and may help more suitable visitors feel ready to enquire.",
+                "Trust Evidence": "Making relevant, genuine evidence easier to find could help prospective customers assess credibility with greater confidence. If that confidence helps suitable prospects proceed, it could contribute to more enquiries or bookings over time.",
+                "Technical Accessibility": "Clearer technical signals could make important pages and business information easier for systems to interpret consistently, while helping avoid preventable friction for visitors.",
+                "Narrative Consistency": "A more consistent explanation of the business could reduce confusion and help prospective customers understand the offer more quickly before deciding whether to make contact.",
+                "External Validation": "Clear links to relevant, legitimate third-party evidence could give prospective customers additional ways to verify the business and feel more informed when comparing options."
+            }
+            item["potential_outcome"] = outcome_by_signal.get(
+                sig["label"],
+                "Addressing this evidence gap could make the business easier to understand or verify. Any effect on enquiries or bookings would need to be measured rather than assumed."
+            )
         gap_count=len(sig.get("gaps",[]))
         if gap_count==0:
             sig["diagnostic_summary"]=synthesis[sig["label"]]["strong"]

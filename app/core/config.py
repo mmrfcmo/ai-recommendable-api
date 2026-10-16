@@ -31,6 +31,7 @@ class Settings(BaseSettings):
         # Edition staging frontend so browser preflight requests can succeed.
         required_origins = [
             "https://rbai-roofer-edition-staging.onrender.com",
+            "https://rbai-roofer-edition-nav-preview.onrender.com",
         ]
         return list(dict.fromkeys(origins + required_origins))
 

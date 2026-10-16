@@ -32,6 +32,7 @@ class Settings(BaseSettings):
         required_origins = [
             "https://rbai-roofer-edition-staging.onrender.com",
             "https://rbai-roofer-edition-nav-preview.onrender.com",
+            "https://rbai-roofer-snapshot-priority-preview.onrender.com",
         ]
         return list(dict.fromkeys(origins + required_origins))
 

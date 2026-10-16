@@ -24,10 +24,15 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list:
-        origins = [o.strip() for o in self.cors_origins.split(",")]
+        origins = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
         if "*" in origins:
             return ["*"]
-        return origins
+        # Keep existing configured origins and explicitly permit the RbAI Roofer
+        # Edition staging frontend so browser preflight requests can succeed.
+        required_origins = [
+            "https://rbai-roofer-edition-staging.onrender.com",
+        ]
+        return list(dict.fromkeys(origins + required_origins))
 
     @property
     def async_database_url(self) -> str:

@@ -25,8 +25,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list:
         origins = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
-        if "*" in origins:
-            return ["*"]
+        # Treat a wildcard configuration as a request for the known public frontends,
+        # rather than returning "*" alongside allow_credentials=True. Starlette requires
+        # explicit origins for credentialed CORS preflight requests.
+        origins = [o for o in origins if o != "*"]
         # Keep existing configured origins and explicitly permit the RbAI Roofer
         # Edition frontends and isolated snapshot previews.
         required_origins = [

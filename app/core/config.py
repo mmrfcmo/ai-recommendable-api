@@ -34,6 +34,7 @@ class Settings(BaseSettings):
             "https://rbai-roofer-edition-nav-preview.onrender.com",
             "https://rbai-roofer-snapshot-priority-preview.onrender.com",
             "https://rbai-roofer-snapshot-aha-v2-preview.onrender.com",
+            "https://rbai-roofer-snapshot-v3-preview.onrender.com",
         ]
         return list(dict.fromkeys(origins + required_origins))
 

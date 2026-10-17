@@ -28,11 +28,12 @@ class Settings(BaseSettings):
         if "*" in origins:
             return ["*"]
         # Keep existing configured origins and explicitly permit the RbAI Roofer
-        # Edition staging frontend so browser preflight requests can succeed.
+        # Edition frontends and isolated snapshot previews.
         required_origins = [
             "https://rbai-roofer-edition-staging.onrender.com",
             "https://rbai-roofer-edition-nav-preview.onrender.com",
             "https://rbai-roofer-snapshot-priority-preview.onrender.com",
+            "https://rbai-roofer-snapshot-aha-v2-preview.onrender.com",
         ]
         return list(dict.fromkeys(origins + required_origins))
 

@@ -137,16 +137,34 @@ async def assess(url, business_name=None, mode="basic"):
     root=f"{parsed.scheme}://{parsed.netloc}"
     pages=[url]
     max_pages=1 if mode=="basic" else 8
-    timeout=12 if mode=="basic" else 10
+    timeout=25 if mode=="basic" else 15
     page_data=[]
-    headers={"User-Agent":"RbAI-TrustSignalsScanner/1.0"}
+    # Use a conventional user-agent; some public sites reject generic scanner user-agents.
+    headers={"User-Agent":"Mozilla/5.0 (compatible; RecommendableByAI-WebsiteAssessment/1.0; +https://ai-recommendable.com)"}
     async with httpx.AsyncClient(timeout=timeout,follow_redirects=True,headers=headers) as client:
-        try:
-            first=await client.get(url)
-            first.raise_for_status()
-        except Exception as exc:
-            return {"success":False,"mode":mode,"url":url,"error":f"Unable to retrieve website: {str(exc)[:120]}",
-                    "signals":[_signal(k,l,0,100,["Assessment could not retrieve the site."]) for k,l in SIGNALS]}
+        first=None
+        failures=[]
+        candidates=[url]
+        # The input UI normalises away www; try the alternate public hostname if the first fails.
+        host=parsed.netloc.lower()
+        if host.startswith("www."):
+            candidates.append(f"{parsed.scheme}://{host[4:]}{parsed.path or '/'}")
+        else:
+            candidates.append(f"{parsed.scheme}://www.{host}{parsed.path or '/'}")
+        for candidate in dict.fromkeys(candidates):
+            try:
+                response=await client.get(candidate)
+                response.raise_for_status()
+                first=response
+                url=str(first.url).split("#")[0]
+                parsed=urlparse(url)
+                root=f"{parsed.scheme}://{parsed.netloc}"
+                break
+            except Exception as exc:
+                failures.append(f"{candidate}: {type(exc).__name__}: {str(exc)[:100]}")
+        if first is None:
+            return {"success":False,"mode":mode,"url":url,"error":"Unable to retrieve website after trying the supplied and alternate www address. "+" | ".join(failures),
+                    "signals":[_signal(k,l,0,100,["Assessment could not retrieve the site from the assessment server."]) for k,l in SIGNALS]}
         def parse(page_url, html):
             soup=BeautifulSoup(html,"html.parser")
             text=_clean(soup.get_text(" ",strip=True)); title=_clean(soup.title.get_text() if soup.title else "")
